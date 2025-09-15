@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario Looker - Debug</title>
+  <title>Formulario Looker - Debug con Columna L</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -19,7 +19,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>Formulario Looker - Versión Debug</h2>
+    <h2>Formulario Looker - Versión Debug con Columna L</h2>
     
     <button onclick="testConnection()">🧪 Test Conexión</button>
     <button onclick="showFullDebug()">📊 Mostrar Debug Completo</button>
@@ -38,8 +38,11 @@
       <label>Número:</label>
       <input type="text" id="num" disabled>
       
-      <label>Valor Unitario:</label>
+      <label>Valor Unitario (Columna K):</label>
       <input type="text" id="unitario" disabled>
+
+      <label>Columna L:</label>
+      <input type="text" id="columnaL" disabled>
 
       <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
     </form>
@@ -59,7 +62,7 @@
 
   <script>
     // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
-    const API_URL = "https://script.google.com/macros/s/AKfycbwMyD5ORFJSXNRgioIlqmDMp0s8Q_HzNfRtQKsd4WM5j7taLm8vUT4zHV85oaefMYra/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxvekTuljokSa2gbLL0o7mkWJoWF9Gui1ymbG7T7hdUgeUdpwIVg95oHac8g5bkDOWV/exec";
     
     let registros = [];
     let subproyectos = [];
@@ -99,12 +102,17 @@
           • Subproyecto: Columna ${lastResponse.debug.columnasUsadas.subproyecto}<br>
           • Rol: Columna ${lastResponse.debug.columnasUsadas.rol}<br>
           • Número: Columna ${lastResponse.debug.columnasUsadas.num}<br>
-          • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br><br>
+          • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br>
+          • Columna L: Columna ${lastResponse.debug.columnasUsadas.columnaL}<br><br>
+          
+          <strong>🏷️ Headers de columnas importantes:</strong><br>
+          • Columna K: "${lastResponse.debug.columnaKHeader}"<br>
+          • Columna L: "${lastResponse.debug.columnaLHeader}"<br><br>
           
           <strong>📝 Primeros 3 registros:</strong><br>
           ${lastResponse.debug.primeros3Registros ? 
             lastResponse.debug.primeros3Registros.map(r => 
-              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | "${r.unitario}"`
+              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | K:"${r.unitario}" | L:"${r.columnaL}"`
             ).join('<br>') : 'No hay registros'}
         `;
       } else {
@@ -137,6 +145,8 @@
             log("Columnas usadas: " + JSON.stringify(json.debug.columnasUsadas));
             log("Registros encontrados: " + json.debug.totalRegistros);
             log("Primeros 3 registros: " + JSON.stringify(json.debug.primeros3Registros));
+            log("Header Columna K: " + json.debug.columnaKHeader);
+            log("Header Columna L: " + json.debug.columnaLHeader);
           }
           
         } catch(e) {
@@ -174,6 +184,11 @@
           });
           
           log(`✅ Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
+          log("Ejemplo de registro con columnaL:");
+          if (registros.length > 0) {
+            log(registros[0]);
+          }
+          
           showStatus(`Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
           
           // Actualizar info de debug automáticamente
@@ -206,7 +221,7 @@
       
       log(`Encontrados ${roles.length} roles para este subproyecto:`);
       log(roles);
-      log("Registros del subproyecto:");
+      log("Registros del subproyecto (incluyendo columnaL):");
       log(registrosDelSub);
       
       rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
@@ -231,18 +246,21 @@
       if (registro) {
         document.getElementById("num").value = registro.num || "";
         document.getElementById("unitario").value = registro.unitario || "";
+        document.getElementById("columnaL").value = registro.columnaL || "";
         document.getElementById("formulario").dataset.rowIndex = registro.row;
-        log(`Cargando datos de fila ${registro.row}:`);
+        log(`Cargando datos de fila ${registro.row} (incluyendo columnaL):`);
         log(registro);
       } else {
         document.getElementById("num").value = "";
         document.getElementById("unitario").value = "";
+        document.getElementById("columnaL").value = "";
         delete document.getElementById("formulario").dataset.rowIndex;
         log("Nuevo registro");
       }
       
       document.getElementById("num").disabled = false;
       document.getElementById("unitario").disabled = false;
+      document.getElementById("columnaL").disabled = false;
       document.getElementById("guardar").disabled = false;
     }
 
@@ -256,11 +274,12 @@
         rol: document.getElementById("rol").value,
         num: document.getElementById("num").value,
         unitario: document.getElementById("unitario").value,
+        columnaL: document.getElementById("columnaL").value,
         row: document.getElementById("formulario").dataset.rowIndex ? 
              parseInt(document.getElementById("formulario").dataset.rowIndex) : null
       };
       
-      log("Guardando:");
+      log("Guardando (incluyendo columnaL):");
       log(payload);
       
       try {
@@ -275,7 +294,7 @@
         log(data);
         
         if (data.status === "ok") {
-          showStatus("✅ Guardado correctamente");
+          showStatus("✅ Guardado correctamente (incluyendo columna L)");
           await cargarDatos();
         } else {
           throw new Error(data.message);
@@ -294,6 +313,3 @@
   </script>
 </body>
 </html>
-
-
-
