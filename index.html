@@ -1,642 +1,643 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulario Looker - Debug con Columna L</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input, select { width: 100%; padding: 10px; margin-top: 4px; box-sizing: border-box; }
-    button { width: 100%; margin-top: 20px; padding: 12px; background: #007bff; color: white; border: none; cursor: pointer; }
-    .debug { margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
-    .status { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
-    .success { background: #d4edda; color: #155724; }
-    .error { background: #f8d7da; color: #721c24; }
-    .debug-section { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 2px solid #0066cc; border-radius: 5px; }
-    .debug-title { font-weight: bold; color: #0066cc; margin-bottom: 10px; }
-    
-    /* Nuevos estilos para el layout de 2 columnas */
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-    .form-field { display: flex; flex-direction: column; }
-    .form-field label { margin-top: 0; margin-bottom: 5px; }
-    .full-width { grid-column: 1 / -1; }
-    
-    /* Estilo para el campo de búsqueda de subproyecto */
-    .searchable-select { position: relative; }
-    .search-input { 
-      width: 100%; 
-      padding: 10px; 
-      border: 1px solid #ccc; 
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .dropdown-list { 
-      position: absolute; 
-      top: 100%; 
-      left: 0; 
-      right: 0; 
-      background: white; 
-      border: 1px solid #ccc; 
-      border-top: none;
-      border-radius: 0 0 4px 4px;
-      max-height: 200px; 
-      overflow-y: auto; 
-      z-index: 1000; 
-      display: none;
-    }
-    .dropdown-item { 
-      padding: 10px; 
-      cursor: pointer; 
-      border-bottom: 1px solid #eee;
-    }
-    .dropdown-item:hover { 
-      background-color: #f0f0f0; 
-    }
-    .dropdown-item:last-child { 
-      border-bottom: none; 
-    }
-    .dropdown-item.selected { 
-      background-color: #007bff; 
-      color: white; 
-    }
-    
-    /* Formato para campos monetarios */
-    .currency-field {
-      position: relative;
-    }
-    .currency-field::before {
-      content: '$';
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #666;
-      z-index: 1;
-    }
-    .currency-input {
-      padding-left: 25px !important;
-      text-align: right;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Formulario Looker - Debug con Columna L</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select { width: 100%; padding: 10px; margin-top: 4px; box-sizing: border-box; }
+    button { width: 100%; margin-top: 20px; padding: 12px; background: #007bff; color: white; border: none; cursor: pointer; }
+    .debug { margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    .status { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .debug-section { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 2px solid #0066cc; border-radius: 5px; }
+    .debug-title { font-weight: bold; color: #0066cc; margin-bottom: 10px; }
+    
+    /* Nuevos estilos para el layout de 2 columnas */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+    .form-field { display: flex; flex-direction: column; }
+    .form-field label { margin-top: 0; margin-bottom: 5px; }
+    .full-width { grid-column: 1 / -1; }
+    
+    /* Estilo para el campo de búsqueda de subproyecto */
+    .searchable-select { position: relative; }
+    .search-input { 
+      width: 100%; 
+      padding: 10px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .dropdown-list { 
+      position: absolute; 
+      top: 100%; 
+      left: 0; 
+      right: 0; 
+      background: white; 
+      border: 1px solid #ccc; 
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      max-height: 200px; 
+      overflow-y: auto; 
+      z-index: 1000; 
+      display: none;
+    }
+    .dropdown-item { 
+      padding: 10px; 
+      cursor: pointer; 
+      border-bottom: 1px solid #eee;
+    }
+    .dropdown-item:hover { 
+      background-color: #f0f0f0; 
+    }
+    .dropdown-item:last-child { 
+      border-bottom: none; 
+    }
+    .dropdown-item.selected { 
+      background-color: #007bff; 
+      color: white; 
+    }
+    
+    /* Formato para campos monetarios */
+    .currency-field {
+      position: relative;
+    }
+    .currency-field::before {
+      content: '$';
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+      z-index: 1;
+    }
+    .currency-input {
+      padding-left: 25px !important;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Formulario Looker - Versión Debug con Columna L</h2>
-    
-    <button onclick="testConnection()">🧪 Test Conexión</button>
-    <button onclick="showFullDebug()">📊 Mostrar Debug Completo</button>
+  <div class="container">
+    <h2>Formulario Looker - Versión Debug con Columna L</h2>
+    
+    <button onclick="testConnection()">🧪 Test Conexión</button>
+    <button onclick="showFullDebug()">📊 Mostrar Debug Completo</button>
 
-    <form id="formulario" onsubmit="return false;">
-            <div class="full-width">
-        <label>Subproyecto:</label>
-        <div class="searchable-select">
-          <input type="text" id="subproyecto" class="search-input" placeholder="Buscar subproyecto..." 
-                 oninput="filterSubproyectos()" onclick="showDropdown()"
-                 onkeydown="handleKeyNavigation()">
-          <div id="subproyecto-dropdown" class="dropdown-list"></div>
-        </div>
-      </div>
+    <form id="formulario" onsubmit="return false;">
+      <!-- Fila 1: Subproyecto (ancho completo) -->
+      <div class="full-width">
+        <label>Subproyecto:</label>
+        <div class="searchable-select">
+          <input type="text" id="subproyecto" class="search-input" placeholder="Buscar subproyecto..." 
+                 oninput="filterSubproyectos()" onfocus="showDropdown()" onblur="hideDropdown()" 
+                 onkeydown="handleKeyNavigation(event)">
+          <div id="subproyecto-dropdown" class="dropdown-list"></div>
+        </div>
+      </div>
 
-            <div class="form-row">
-        <div class="form-field">
-          <label>Rol:</label>
-          <select id="rol" disabled onchange="onRolChange()">
-            <option value="">Seleccione subproyecto primero</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Número:</label>
-          <input type="text" id="num" disabled>
-        </div>
-      </div>
-      
-            <div class="form-row">
-        <div class="form-field">
-          <label>Valor Unitario (Columna K):</label>
-          <div class="currency-field">
-            <input type="text" id="unitario" class="currency-input" disabled 
-                   oninput="formatCurrency(this); calculateTotal()">
-          </div>
-        </div>
-        <div class="form-field">
-          <label>Valor Total (Columna L):</label>
-          <div class="currency-field">
-            <input type="text" id="columnaL" class="currency-input" disabled 
-                   oninput="formatCurrency(this)">
-          </div>
-        </div>
-      </div>
+      <!-- Fila 2: Rol y Número -->
+      <div class="form-row">
+        <div class="form-field">
+          <label>Rol:</label>
+          <select id="rol" disabled onchange="onRolChange()">
+            <option value="">Seleccione subproyecto primero</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Número:</label>
+          <input type="text" id="num" disabled>
+        </div>
+      </div>
+      
+      <!-- Fila 3: Valor Unitario y Valor Total -->
+      <div class="form-row">
+        <div class="form-field">
+          <label>Valor Unitario (Columna K):</label>
+          <div class="currency-field">
+            <input type="text" id="unitario" class="currency-input" disabled 
+                   oninput="formatCurrency(this); calculateTotal()">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Valor Total (Columna L):</label>
+          <div class="currency-field">
+            <input type="text" id="columnaL" class="currency-input" disabled 
+                   oninput="formatCurrency(this)">
+          </div>
+        </div>
+      </div>
 
-            <div class="form-row">
-        <div class="form-field">
-          <label>Tipo (Columna M):</label>
-          <select id="tipo" disabled>
-            <option value="">Seleccione subproyecto primero</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Tipo de Personal (Columna N):</label>
-          <select id="tipoPersonal" disabled>
-            <option value="">Seleccione subproyecto primero</option>
-          </select>
-        </div>
-      </div>
+      <!-- Fila 4: Los dos tipos -->
+      <div class="form-row">
+        <div class="form-field">
+          <label>Tipo (Columna M):</label>
+          <select id="tipo" disabled>
+            <option value="">Seleccione subproyecto primero</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Tipo de Personal (Columna N):</label>
+          <select id="tipoPersonal" disabled>
+            <option value="">Seleccione subproyecto primero</option>
+          </select>
+        </div>
+      </div>
 
-      <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
-    </form>
-    
-    <div id="status" class="status"></div>
-    
-    <div class="debug-section">
-      <div class="debug-title">🔍 INFORMACIÓN DE DEBUG</div>
-      <div id="debug-info">No hay información de debug disponible</div>
-    </div>
-    
-    <div class="debug-section">
-      <div class="debug-title">📝 LOG DE ACTIVIDAD</div>
-      <div id="debug" class="debug">Iniciando aplicación...\n</div>
-    </div>
-  </div>
+      <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
+    </form>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="debug-section">
+      <div class="debug-title">🔍 INFORMACIÓN DE DEBUG</div>
+      <div id="debug-info">No hay información de debug disponible</div>
+    </div>
+    
+    <div class="debug-section">
+      <div class="debug-title">📝 LOG DE ACTIVIDAD</div>
+      <div id="debug" class="debug">Iniciando aplicación...\n</div>
+    </div>
+  </div>
 
-  <script>
-    // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
-    const API_URL = "https://script.google.com/macros/s/AKfycbzD13x40paMguboGSMdb50QijK4V-1Lebo60queIMn8AAw_GSfY2if2ZxE3-6Fpvppw/exec";
-    
-    let registros = [];
-    let subproyectos = [];
-    let filteredSubproyectos = [];
-    let selectedSubproyectoIndex = -1;
-    let tiposUnicos = [];
-    let tiposPersonalUnicos = [];
-    let lastResponse = null; // Para guardar la última respuesta completa
+  <script>
+    // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
+    const API_URL = "https://script.google.com/macros/s/AKfycbzD13x40paMguboGSMdb50QijK4V-1Lebo60queIMn8AAw_GSfY2if2ZxE3-6Fpvppw/exec";
+    
+    let registros = [];
+    let subproyectos = [];
+    let filteredSubproyectos = [];
+    let selectedSubproyectoIndex = -1;
+    let tiposUnicos = [];
+    let tiposPersonalUnicos = [];
+    let lastResponse = null; // Para guardar la última respuesta completa
 
-    function log(message) {
-      const timestamp = new Date().toLocaleTimeString();
-      const debugDiv = document.getElementById("debug");
-      debugDiv.textContent += `${timestamp}: ${JSON.stringify(message)}\n`;
-      debugDiv.scrollTop = debugDiv.scrollHeight;
-      console.log(message);
-    }
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const debugDiv = document.getElementById("debug");
+      debugDiv.textContent += `${timestamp}: ${JSON.stringify(message)}\n`;
+      debugDiv.scrollTop = debugDiv.scrollHeight;
+      console.log(message);
+    }
 
-    function showStatus(message, isError = false) {
-      const statusDiv = document.getElementById("status");
-      statusDiv.className = `status ${isError ? 'error' : 'success'}`;
-      statusDiv.textContent = message;
-      statusDiv.style.display = 'block';
-      setTimeout(() => statusDiv.style.display = 'none', 5000);
-    }
+    function showStatus(message, isError = false) {
+      const statusDiv = document.getElementById("status");
+      statusDiv.className = `status ${isError ? 'error' : 'success'}`;
+      statusDiv.textContent = message;
+      statusDiv.style.display = 'block';
+      setTimeout(() => statusDiv.style.display = 'none', 5000);
+    }
 
-    function showFullDebug() {
-      if (lastResponse && lastResponse.debug) {
-        const debugInfo = document.getElementById("debug-info");
-        debugInfo.innerHTML = `
-          <strong>📊 Información de la Hoja:</strong><br>
-          • Total de filas: ${lastResponse.debug.totalFilas}<br>
-          • Total de columnas: ${lastResponse.debug.totalColumnas}<br>
-          • Subproyectos únicos: ${lastResponse.debug.subproyectosUnicos}<br>
-          • Total registros: ${lastResponse.debug.totalRegistros}<br>
-          • Registros con rol: ${lastResponse.debug.registrosConRol}<br>
-          • Tipos únicos: ${tiposUnicos.length}<br>
-          • Tipos de personal únicos: ${tiposPersonalUnicos.length}<br><br>
-          
-          <strong>📋 Encabezados encontrados:</strong><br>
-          ${lastResponse.debug.encabezados.map((h, i) => `Col ${i+1}: "${h}"`).join('<br>')}<br><br>
-          
-          <strong>🎯 Columnas utilizadas:</strong><br>
-          • Subproyecto: Columna ${lastResponse.debug.columnasUsadas.subproyecto}<br>
-          • Rol: Columna ${lastResponse.debug.columnasUsadas.rol}<br>
-          • Número: Columna ${lastResponse.debug.columnasUsadas.num}<br>
-          • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br>
-          • Columna L: Columna ${lastResponse.debug.columnasUsadas.columnaL}<br>
-          • Tipo: Columna ${lastResponse.debug.columnasUsadas.tipo}<br>
-          • Tipo Personal: Columna ${lastResponse.debug.columnasUsadas.tipoPersonal}<br><br>
-          
-          <strong>🏷️ Headers de columnas importantes:</strong><br>
-          • Columna K: "${lastResponse.debug.columnaKHeader}"<br>
-          • Columna L: "${lastResponse.debug.columnaLHeader}"<br>
-          • Columna M: "${lastResponse.debug.columnaMHeader}"<br>
-          • Columna N: "${lastResponse.debug.columnaNHeader}"<br><br>
-          
-          <strong>🎨 Valores únicos encontrados:</strong><br>
-          • Tipos (M): ${tiposUnicos.length > 0 ? tiposUnicos.join(', ') : 'Ninguno'}<br>
-          • Tipos Personal (N): ${tiposPersonalUnicos.length > 0 ? tiposPersonalUnicos.join(', ') : 'Ninguno'}<br><br>
-          
-          <strong>📝 Primeros 3 registros:</strong><br>
-          ${lastResponse.debug.primeros3Registros ? 
-            lastResponse.debug.primeros3Registros.map(r => 
-              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | K:"${r.unitario}" | L:"${r.columnaL}" | M:"${r.tipo}" | N:"${r.tipoPersonal}"`
-            ).join('<br>') : 'No hay registros'}
-        `;
-      } else {
-        document.getElementById("debug-info").innerHTML = "❌ No hay información de debug. Ejecuta 'Cargar Datos' primero.";
-      }
-    }
+    function showFullDebug() {
+      if (lastResponse && lastResponse.debug) {
+        const debugInfo = document.getElementById("debug-info");
+        debugInfo.innerHTML = `
+          <strong>📊 Información de la Hoja:</strong><br>
+          • Total de filas: ${lastResponse.debug.totalFilas}<br>
+          • Total de columnas: ${lastResponse.debug.totalColumnas}<br>
+          • Subproyectos únicos: ${lastResponse.debug.subproyectosUnicos}<br>
+          • Total registros: ${lastResponse.debug.totalRegistros}<br>
+          • Registros con rol: ${lastResponse.debug.registrosConRol}<br>
+          • Tipos únicos: ${tiposUnicos.length}<br>
+          • Tipos de personal únicos: ${tiposPersonalUnicos.length}<br><br>
+          
+          <strong>📋 Encabezados encontrados:</strong><br>
+          ${lastResponse.debug.encabezados.map((h, i) => `Col ${i+1}: "${h}"`).join('<br>')}<br><br>
+          
+          <strong>🎯 Columnas utilizadas:</strong><br>
+          • Subproyecto: Columna ${lastResponse.debug.columnasUsadas.subproyecto}<br>
+          • Rol: Columna ${lastResponse.debug.columnasUsadas.rol}<br>
+          • Número: Columna ${lastResponse.debug.columnasUsadas.num}<br>
+          • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br>
+          • Columna L: Columna ${lastResponse.debug.columnasUsadas.columnaL}<br>
+          • Tipo: Columna ${lastResponse.debug.columnasUsadas.tipo}<br>
+          • Tipo Personal: Columna ${lastResponse.debug.columnasUsadas.tipoPersonal}<br><br>
+          
+          <strong>🏷️ Headers de columnas importantes:</strong><br>
+          • Columna K: "${lastResponse.debug.columnaKHeader}"<br>
+          • Columna L: "${lastResponse.debug.columnaLHeader}"<br>
+          • Columna M: "${lastResponse.debug.columnaMHeader}"<br>
+          • Columna N: "${lastResponse.debug.columnaNHeader}"<br><br>
+          
+          <strong>🎨 Valores únicos encontrados:</strong><br>
+          • Tipos (M): ${tiposUnicos.length > 0 ? tiposUnicos.join(', ') : 'Ninguno'}<br>
+          • Tipos Personal (N): ${tiposPersonalUnicos.length > 0 ? tiposPersonalUnicos.join(', ') : 'Ninguno'}<br><br>
+          
+          <strong>📝 Primeros 3 registros:</strong><br>
+          ${lastResponse.debug.primeros3Registros ? 
+            lastResponse.debug.primeros3Registros.map(r => 
+              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | K:"${r.unitario}" | L:"${r.columnaL}" | M:"${r.tipo}" | N:"${r.tipoPersonal}"`
+            ).join('<br>') : 'No hay registros'}
+        `;
+      } else {
+        document.getElementById("debug-info").innerHTML = "❌ No hay información de debug. Ejecuta 'Cargar Datos' primero.";
+      }
+    }
 
-    async function testConnection() {
-      log("🧪 Probando conexión...");
-      try {
-        const response = await fetch(API_URL);
-        log("Response status: " + response.status);
-        log("Response headers: " + JSON.stringify([...response.headers.entries()]));
-        
-        const text = await response.text();
-        log("Response text (primeros 500 chars): " + text.substring(0, 500));
-        
-        try {
-          const json = JSON.parse(text);
-          log("JSON parseado exitosamente");
-          log("Estructura completa del JSON:");
-          log(json);
-          
-          // Mostrar debug si está disponible
-          if (json.debug) {
-            log("=== INFORMACIÓN DE DEBUG ===");
-            log("Total filas: " + json.debug.totalFilas);
-            log("Total columnas: " + json.debug.totalColumnas);
-            log("Encabezados: " + JSON.stringify(json.debug.encabezados));
-            log("Columnas usadas: " + JSON.stringify(json.debug.columnasUsadas));
-            log("Registros encontrados: " + json.debug.totalRegistros);
-            log("Primeros 3 registros: " + JSON.stringify(json.debug.primeros3Registros));
-            log("Header Columna K: " + json.debug.columnaKHeader);
-            log("Header Columna L: " + json.debug.columnaLHeader);
-            log("Header Columna M: " + json.debug.columnaMHeader);
-            log("Header Columna N: " + json.debug.columnaNHeader);
-          }
-          
-        } catch(e) {
-          log("Error parseando JSON: " + e.message);
-        }
-      } catch (error) {
-        log("❌ Error de conexión: " + error.message);
-      }
-    }
-
-    function resetFormFields() {
-      // Restablecer todos los campos excepto subproyecto
-      document.getElementById("rol").innerHTML = '<option value="">Seleccione subproyecto primero</option>';
-      document.getElementById("rol").disabled = true;
-      document.getElementById("num").value = "";
-      document.getElementById("num").disabled = true;
-      document.getElementById("unitario").value = "";
-      document.getElementById("unitario").disabled = true;
-      document.getElementById("columnaL").value = "";
-      document.getElementById("columnaL").disabled = true;
-      document.getElementById("tipo").innerHTML = '<option value="">Seleccione rol primero</option>';
-      document.getElementById("tipo").disabled = true;
-      document.getElementById("tipoPersonal").innerHTML = '<option value="">Seleccione rol primero</option>';
-      document.getElementById("tipoPersonal").disabled = true;
-      document.getElementById("guardar").disabled = true;
-      
-      // Limpiar el índice de fila
-      delete document.getElementById("formulario").dataset.rowIndex;
-      
-      log("🔄 Campos del formulario restablecidos");
-    }
-
-    // Funciones para el campo de búsqueda de subproyectos
-    function filterSubproyectos() {
-      const input = document.getElementById("subproyecto");
-      const query = input.value.toLowerCase();
-      
-      if (query === "") {
-        filteredSubproyectos = [...subproyectos];
-      } else {
-        filteredSubproyectos = subproyectos.filter(subproyecto => 
-          subproyecto.toLowerCase().includes(query)
-        );
-      }
-      
-      selectedSubproyectoIndex = -1;
-      updateDropdown();
-      showDropdown();
-    }
-
-    function updateDropdown() {
-      const dropdown = document.getElementById("subproyecto-dropdown");
-      dropdown.innerHTML = "";
-      
-      if (filteredSubproyectos.length === 0) {
-        const item = document.createElement("div");
-        item.className = "dropdown-item";
-        item.textContent = "No se encontraron coincidencias";
-        item.style.color = "#999";
-        dropdown.appendChild(item);
-        return;
-      }
-      
-      filteredSubproyectos.forEach((subproyecto, index) => {
-        const item = document.createElement("div");
-        item.className = "dropdown-item";
-        if (index === selectedSubproyectoIndex) {
-          item.classList.add("selected");
-        }
-        item.textContent = subproyecto;
-        item.onmousedown = () => selectSubproyecto(subproyecto);
-        dropdown.appendChild(item);
-      });
-    }
-
-    function showDropdown() {
-      if (filteredSubproyectos.length === 0) {
-        filteredSubproyectos = [...subproyectos];
-        updateDropdown();
-      }
-      document.getElementById("subproyecto-dropdown").style.display = "block";
-    }
-
-    function hideDropdown() {
-      document.getElementById("subproyecto-dropdown").style.display = "none";
-    }
-
-    function handleKeyNavigation(event) {
-      const dropdown = document.getElementById("subproyecto-dropdown");
-      
-      if (dropdown.style.display === "none") return;
-      
-      switch(event.key) {
-        case "ArrowDown":
-          event.preventDefault();
-          selectedSubproyectoIndex = Math.min(selectedSubproyectoIndex + 1, filteredSubproyectos.length - 1);
-          updateDropdown();
-          break;
-        case "ArrowUp":
-          event.preventDefault();
-          selectedSubproyectoIndex = Math.max(selectedSubproyectoIndex - 1, -1);
-          updateDropdown();
-          break;
-        case "Enter":
-          event.preventDefault();
-          if (selectedSubproyectoIndex >= 0 && selectedSubproyectoIndex < filteredSubproyectos.length) {
-            selectSubproyecto(filteredSubproyectos[selectedSubproyectoIndex]);
-          }
-          break;
-        case "Escape":
-          hideDropdown();
-          break;
-      }
-    }
-
-    function selectSubproyecto(subproyecto) {
-      document.getElementById("subproyecto").value = subproyecto;
-      hideDropdown();
-      onSubproyectoChange(subproyecto);
-    }
-
-    // Funciones para formateo de moneda
-    function formatCurrency(input) {
-      let value = input.value.replace(/[^\d.]/g, '');
-      
-      // Permitir solo un punto decimal
-      const parts = value.split('.');
-      if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
-      }
-      
-      // Limitar decimales a 2 dígitos
-      if (parts.length === 2 && parts[1].length > 2) {
-        value = parts[0] + '.' + parts[1].substring(0, 2);
-      }
-      
-      if (value && !isNaN(parseFloat(value))) {
-        const numValue = parseFloat(value);
-        input.value = numValue.toLocaleString('es-CO', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2
-        });
-      }
-    }
-
-    function calculateTotal() {
-      const unitario = document.getElementById("unitario").value;
-      const num = document.getElementById("num").value;
-      
-      if (unitario && num) {
-        const unitarioValue = parseFloat(unitario.replace(/[^\d.]/g, '')) || 0;
-        const numValue = parseFloat(num) || 0;
-        const total = unitarioValue * numValue;
-        
-        if (!isNaN(total)) {
-          document.getElementById("columnaL").value = total.toLocaleString('es-CO', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-          });
-        }
-      }
-    }
-
-    function populateDropdown(selectId, values, defaultText = "Seleccione...") {
-      const select = document.getElementById(selectId);
-      select.innerHTML = `<option value="">${defaultText}</option>`;
-      
-      values.forEach(value => {
-        if (value && value.trim() !== "") {
-          const opt = document.createElement("option");
-          opt.value = value;
-          opt.textContent = value;
-          select.appendChild(opt);
-        }
-      });
-    }
-
-    async function cargarDatos() {
-      log("Cargando datos...");
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        
-        // Guardar la respuesta completa para debug
-        lastResponse = data;
-        
-        log("Datos recibidos (estructura completa):");
-        log(data);
-
-        if (data.status === "ok") {
-          subproyectos = data.subproyectos || [];
-          registros = data.registros || [];
-          filteredSubproyectos = [...subproyectos]; // Inicializar lista filtrada
-          
-          // Extraer valores únicos para los dropdowns
-          tiposUnicos = [...new Set(registros.map(r => r.tipo).filter(t => t && t.trim() !== ""))].sort();
-          tiposPersonalUnicos = [...new Set(registros.map(r => r.tipoPersonal).filter(tp => tp && tp.trim() !== ""))].sort();
-          
-          log(`🎨 Encontrados ${tiposUnicos.length} tipos únicos: ${tiposUnicos.join(', ')}`);
-          log(`👥 Encontrados ${tiposPersonalUnicos.length} tipos de personal únicos: ${tiposPersonalUnicos.join(', ')}`);
-          
-          // Inicializar el campo de búsqueda
-          document.getElementById("subproyecto").placeholder = `Buscar entre ${subproyectos.length} subproyectos...`;
-          
-          showStatus(`Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
-          
-          // Actualizar info de debug automáticamente
-          showFullDebug();
-          
-        } else {
-          throw new Error(data.message || "Error del servidor");
-        }
-      } catch (error) {
-        log("❌ Error cargando datos: " + error.message);
-        showStatus("Error: " + error.message, true);
-        document.getElementById("subproyecto").placeholder = "Error al cargar datos";
-      }
-    }
-
-    function onSubproyectoChange(subproyecto = null) {
-      const selectedSubproyecto = subproyecto || document.getElementById("subproyecto").value;
-      
-      log(`Subproyecto seleccionado: ${selectedSubproyecto}`);
-      
-      // Restablecer todos los otros campos
-      resetFormFields();
-      
-      if (!selectedSubproyecto) {
-        return;
-      }
-
-      const registrosDelSub = registros.filter(r => r.subproyecto === selectedSubproyecto);
-      const roles = [...new Set(registrosDelSub.map(r => r.rol).filter(r => r && r.trim()))];
-      
-      log(`Encontrados ${roles.length} roles para este subproyecto:`);
-      log(roles);
-      log("Registros del subproyecto (incluyendo todas las columnas):");
-      log(registrosDelSub);
-      
-      const rolSelect = document.getElementById("rol");
-      rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
-      roles.forEach(rol => {
-        const opt = document.createElement("option");
-        opt.value = rol;
-        opt.textContent = rol;
-        rolSelect.appendChild(opt);
-      });
-      
-      rolSelect.disabled = false;
-    }
-
-    function onRolChange() {
-      const subproyecto = document.getElementById("subproyecto").value;
-      const rol = document.getElementById("rol").value;
-      
-      if (!subproyecto || !rol) return;
-      
-      const registro = registros.find(r => r.subproyecto === subproyecto && r.rol === rol);
-      
-      // Habilitar y llenar los dropdowns de tipo
-      populateDropdown("tipo", tiposUnicos, "Seleccione tipo...");
-      populateDropdown("tipoPersonal", tiposPersonalUnicos, "Seleccione tipo de personal...");
-      
-      if (registro) {
-        document.getElementById("num").value = registro.num || "";
-        
-        // Formatear valores monetarios al cargar
-        if (registro.unitario) {
-          const unitarioValue = parseFloat(registro.unitario) || 0;
-          document.getElementById("unitario").value = unitarioValue.toLocaleString('es-CO', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-          });
-        } else {
-          document.getElementById("unitario").value = "";
-        }
-        
-        if (registro.columnaL) {
-          const columnaLValue = parseFloat(registro.columnaL) || 0;
-          document.getElementById("columnaL").value = columnaLValue.toLocaleString('es-CO', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-          });
-        } else {
-          document.getElementById("columnaL").value = "";
-        }
-        
-        document.getElementById("tipo").value = registro.tipo || "";
-        document.getElementById("tipoPersonal").value = registro.tipoPersonal || "";
-        document.getElementById("formulario").dataset.rowIndex = registro.row;
-        log(`Cargando datos de fila ${registro.row} (incluyendo todas las columnas):`);
-        log(registro);
-      } else {
-        document.getElementById("num").value = "";
-        document.getElementById("unitario").value = "";
-        document.getElementById("columnaL").value = "";
-        document.getElementById("tipo").value = "";
-        document.getElementById("tipoPersonal").value = "";
-        delete document.getElementById("formulario").dataset.rowIndex;
-        log("Nuevo registro");
-      }
-      
-      // Habilitar todos los campos
-      document.getElementById("num").disabled = false;
-      document.getElementById("unitario").disabled = false;
-      document.getElementById("columnaL").disabled = false;
-      document.getElementById("tipo").disabled = false;
-      document.getElementById("tipoPersonal").disabled = false;
-      document.getElementById("guardar").disabled = false;
-    }
-
-    async function guardarDatos() {
-      const btn = document.getElementById("guardar");
-      btn.disabled = true;
-      btn.textContent = "Guardando...";
-      
-      const payload = {
-        subproyecto: document.getElementById("subproyecto").value,
-        rol: document.getElementById("rol").value,
-        num: document.getElementById("num").value,
-        unitario: document.getElementById("unitario").value.replace(/[^\d.]/g, '') || "", // Limpiar formato
-        columnaL: document.getElementById("columnaL").value.replace(/[^\d.]/g, '') || "", // Limpiar formato
-        tipo: document.getElementById("tipo").value,
-        tipoPersonal: document.getElementById("tipoPersonal").value,
-        row: document.getElementById("formulario").dataset.rowIndex ? 
-             parseInt(document.getElementById("formulario").dataset.rowIndex) : null
-      };
-      
-      log("Guardando (incluyendo todas las columnas):");
-      log(payload);
-      
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        
-        const data = await response.json();
-        log("Respuesta guardado:");
-        log(data);
-        
-        if (data.status === "ok") {
-          showStatus("✅ Guardado correctamente (incluyendo columnas L, M y N)");
-          await cargarDatos();
-        } else {
-          throw new Error(data.message);
-        }
-      } catch (error) {
-        log("❌ Error guardando: " + error.message);
-        showStatus("Error: " + error.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Guardar";
-      }
-    }
-
-    // Inicializar y agregar eventos para cálculo automático
-    window.addEventListener('load', () => {
-      cargarDatos();
-      
-      // Agregar evento para cálculo automático cuando cambie el número
-      document.getElementById("num").addEventListener('input', calculateTotal);
-
-      // Agregar evento para ocultar el dropdown al hacer clic fuera
-      document.addEventListener('click', function(event) {
-          const subproyectoInput = document.getElementById("subproyecto");
-          const subproyectoDropdown = document.getElementById("subproyecto-dropdown");
-
-          // Si el clic no fue dentro del input ni dentro del dropdown, ocúltalo
-          if (!subproyectoInput.contains(event.target) && !subproyectoDropdown.contains(event.target)) {
-              hideDropdown();
+    async function testConnection() {
+      log("🧪 Probando conexión...");
+      try {
+        const response = await fetch(API_URL);
+        log("Response status: " + response.status);
+        log("Response headers: " + JSON.stringify([...response.headers.entries()]));
+        
+        const text = await response.text();
+        log("Response text (primeros 500 chars): " + text.substring(0, 500));
+        
+        try {
+          const json = JSON.parse(text);
+          log("JSON parseado exitosamente");
+          log("Estructura completa del JSON:");
+          log(json);
+          
+          // Mostrar debug si está disponible
+          if (json.debug) {
+            log("=== INFORMACIÓN DE DEBUG ===");
+            log("Total filas: " + json.debug.totalFilas);
+            log("Total columnas: " + json.debug.totalColumnas);
+            log("Encabezados: " + JSON.stringify(json.debug.encabezados));
+            log("Columnas usadas: " + JSON.stringify(json.debug.columnasUsadas));
+            log("Registros encontrados: " + json.debug.totalRegistros);
+            log("Primeros 3 registros: " + JSON.stringify(json.debug.primeros3Registros));
+            log("Header Columna K: " + json.debug.columnaKHeader);
+            log("Header Columna L: " + json.debug.columnaLHeader);
+            log("Header Columna M: " + json.debug.columnaMHeader);
+            log("Header Columna N: " + json.debug.columnaNHeader);
           }
+          
+        } catch(e) {
+          log("Error parseando JSON: " + e.message);
+        }
+      } catch (error) {
+        log("❌ Error de conexión: " + error.message);
+      }
+    }
+
+    function resetFormFields() {
+      // Restablecer todos los campos excepto subproyecto
+      document.getElementById("rol").innerHTML = '<option value="">Seleccione subproyecto primero</option>';
+      document.getElementById("rol").disabled = true;
+      document.getElementById("num").value = "";
+      document.getElementById("num").disabled = true;
+      document.getElementById("unitario").value = "";
+      document.getElementById("unitario").disabled = true;
+      document.getElementById("columnaL").value = "";
+      document.getElementById("columnaL").disabled = true;
+      document.getElementById("tipo").innerHTML = '<option value="">Seleccione rol primero</option>';
+      document.getElementById("tipo").disabled = true;
+      document.getElementById("tipoPersonal").innerHTML = '<option value="">Seleccione rol primero</option>';
+      document.getElementById("tipoPersonal").disabled = true;
+      document.getElementById("guardar").disabled = true;
+      
+      // Limpiar el índice de fila
+      delete document.getElementById("formulario").dataset.rowIndex;
+      
+      log("🔄 Campos del formulario restablecidos");
+    }
+
+    // Funciones para el campo de búsqueda de subproyectos
+    function filterSubproyectos() {
+      const input = document.getElementById("subproyecto");
+      const query = input.value.toLowerCase();
+      
+      if (query === "") {
+        filteredSubproyectos = [...subproyectos];
+      } else {
+        filteredSubproyectos = subproyectos.filter(subproyecto => 
+          subproyecto.toLowerCase().includes(query)
+        );
+      }
+      
+      selectedSubproyectoIndex = -1;
+      updateDropdown();
+      showDropdown();
+    }
+
+    function updateDropdown() {
+      const dropdown = document.getElementById("subproyecto-dropdown");
+      dropdown.innerHTML = "";
+      
+      if (filteredSubproyectos.length === 0) {
+        const item = document.createElement("div");
+        item.className = "dropdown-item";
+        item.textContent = "No se encontraron coincidencias";
+        item.style.color = "#999";
+        dropdown.appendChild(item);
+        return;
+      }
+      
+      filteredSubproyectos.forEach((subproyecto, index) => {
+        const item = document.createElement("div");
+        item.className = "dropdown-item";
+        if (index === selectedSubproyectoIndex) {
+          item.classList.add("selected");
+        }
+        item.textContent = subproyecto;
+        item.onmousedown = () => selectSubproyecto(subproyecto);
+        dropdown.appendChild(item);
       });
-    });
-  </script>
+    }
+
+    function showDropdown() {
+      if (filteredSubproyectos.length === 0) {
+        filteredSubproyectos = [...subproyectos];
+        updateDropdown();
+      }
+      document.getElementById("subproyecto-dropdown").style.display = "block";
+    }
+
+    function hideDropdown() {
+      setTimeout(() => {
+        document.getElementById("subproyecto-dropdown").style.display = "none";
+      }, 150);
+    }
+
+    function handleKeyNavigation(event) {
+      const dropdown = document.getElementById("subproyecto-dropdown");
+      
+      if (dropdown.style.display === "none") return;
+      
+      switch(event.key) {
+        case "ArrowDown":
+          event.preventDefault();
+          selectedSubproyectoIndex = Math.min(selectedSubproyectoIndex + 1, filteredSubproyectos.length - 1);
+          updateDropdown();
+          break;
+        case "ArrowUp":
+          event.preventDefault();
+          selectedSubproyectoIndex = Math.max(selectedSubproyectoIndex - 1, -1);
+          updateDropdown();
+          break;
+        case "Enter":
+          event.preventDefault();
+          if (selectedSubproyectoIndex >= 0 && selectedSubproyectoIndex < filteredSubproyectos.length) {
+            selectSubproyecto(filteredSubproyectos[selectedSubproyectoIndex]);
+          }
+          break;
+        case "Escape":
+          hideDropdown();
+          break;
+      }
+    }
+
+    function selectSubproyecto(subproyecto) {
+      document.getElementById("subproyecto").value = subproyecto;
+      hideDropdown();
+      onSubproyectoChange(subproyecto);
+    }
+
+    // Funciones para formateo de moneda
+    function formatCurrency(input) {
+      let value = input.value.replace(/[^\d.]/g, '');
+      
+      // Permitir solo un punto decimal
+      const parts = value.split('.');
+      if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limitar decimales a 2 dígitos
+      if (parts.length === 2 && parts[1].length > 2) {
+        value = parts[0] + '.' + parts[1].substring(0, 2);
+      }
+      
+      if (value && !isNaN(parseFloat(value))) {
+        const numValue = parseFloat(value);
+        input.value = numValue.toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        });
+      }
+    }
+
+    function calculateTotal() {
+      const unitario = document.getElementById("unitario").value;
+      const num = document.getElementById("num").value;
+      
+      if (unitario && num) {
+        const unitarioValue = parseFloat(unitario.replace(/[^\d.]/g, '')) || 0;
+        const numValue = parseFloat(num) || 0;
+        const total = unitarioValue * numValue;
+        
+        if (!isNaN(total)) {
+          document.getElementById("columnaL").value = total.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          });
+        }
+      }
+    }
+
+    function populateDropdown(selectId, values, defaultText = "Seleccione...") {
+      const select = document.getElementById(selectId);
+      select.innerHTML = `<option value="">${defaultText}</option>`;
+      
+      values.forEach(value => {
+        if (value && value.trim() !== "") {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    async function cargarDatos() {
+      log("Cargando datos...");
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        
+        // Guardar la respuesta completa para debug
+        lastResponse = data;
+        
+        log("Datos recibidos (estructura completa):");
+        log(data);
+
+        if (data.status === "ok") {
+          subproyectos = data.subproyectos || [];
+          registros = data.registros || [];
+          filteredSubproyectos = [...subproyectos]; // Inicializar lista filtrada
+          
+          // Extraer valores únicos para los dropdowns
+          tiposUnicos = [...new Set(registros.map(r => r.tipo).filter(t => t && t.trim() !== ""))].sort();
+          tiposPersonalUnicos = [...new Set(registros.map(r => r.tipoPersonal).filter(tp => tp && tp.trim() !== ""))].sort();
+          
+          log(`🎨 Encontrados ${tiposUnicos.length} tipos únicos: ${tiposUnicos.join(', ')}`);
+          log(`👥 Encontrados ${tiposPersonalUnicos.length} tipos de personal únicos: ${tiposPersonalUnicos.join(', ')}`);
+          
+          // Inicializar el campo de búsqueda
+          document.getElementById("subproyecto").placeholder = `Buscar entre ${subproyectos.length} subproyectos...`;
+          
+          log(`✅ Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
+          log("Ejemplo de registro con todas las columnas:");
+          if (registros.length > 0) {
+            log(registros[0]);
+          }
+          
+          showStatus(`Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
+          
+          // Actualizar info de debug automáticamente
+          showFullDebug();
+          
+        } else {
+          throw new Error(data.message || "Error del servidor");
+        }
+      } catch (error) {
+        log("❌ Error cargando datos: " + error.message);
+        showStatus("Error: " + error.message, true);
+        document.getElementById("subproyecto").placeholder = "Error al cargar datos";
+      }
+    }
+
+    function onSubproyectoChange(subproyecto = null) {
+      const selectedSubproyecto = subproyecto || document.getElementById("subproyecto").value;
+      
+      log(`Subproyecto seleccionado: ${selectedSubproyecto}`);
+      
+      // Restablecer todos los otros campos
+      resetFormFields();
+      
+      if (!selectedSubproyecto) {
+        return;
+      }
+
+      const registrosDelSub = registros.filter(r => r.subproyecto === selectedSubproyecto);
+      const roles = [...new Set(registrosDelSub.map(r => r.rol).filter(r => r && r.trim()))];
+      
+      log(`Encontrados ${roles.length} roles para este subproyecto:`);
+      log(roles);
+      log("Registros del subproyecto (incluyendo todas las columnas):");
+      log(registrosDelSub);
+      
+      const rolSelect = document.getElementById("rol");
+      rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
+      roles.forEach(rol => {
+        const opt = document.createElement("option");
+        opt.value = rol;
+        opt.textContent = rol;
+        rolSelect.appendChild(opt);
+      });
+      
+      rolSelect.disabled = false;
+    }
+
+    function onRolChange() {
+      const subproyecto = document.getElementById("subproyecto").value;
+      const rol = document.getElementById("rol").value;
+      
+      if (!subproyecto || !rol) return;
+      
+      const registro = registros.find(r => r.subproyecto === subproyecto && r.rol === rol);
+      
+      // Habilitar y llenar los dropdowns de tipo
+      populateDropdown("tipo", tiposUnicos, "Seleccione tipo...");
+      populateDropdown("tipoPersonal", tiposPersonalUnicos, "Seleccione tipo de personal...");
+      
+      if (registro) {
+        document.getElementById("num").value = registro.num || "";
+        
+        // Formatear valores monetarios al cargar
+        if (registro.unitario) {
+          const unitarioValue = parseFloat(registro.unitario) || 0;
+          document.getElementById("unitario").value = unitarioValue.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          });
+        } else {
+          document.getElementById("unitario").value = "";
+        }
+        
+        if (registro.columnaL) {
+          const columnaLValue = parseFloat(registro.columnaL) || 0;
+          document.getElementById("columnaL").value = columnaLValue.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          });
+        } else {
+          document.getElementById("columnaL").value = "";
+        }
+        
+        document.getElementById("tipo").value = registro.tipo || "";
+        document.getElementById("tipoPersonal").value = registro.tipoPersonal || "";
+        document.getElementById("formulario").dataset.rowIndex = registro.row;
+        log(`Cargando datos de fila ${registro.row} (incluyendo todas las columnas):`);
+        log(registro);
+      } else {
+        document.getElementById("num").value = "";
+        document.getElementById("unitario").value = "";
+        document.getElementById("columnaL").value = "";
+        document.getElementById("tipo").value = "";
+        document.getElementById("tipoPersonal").value = "";
+        delete document.getElementById("formulario").dataset.rowIndex;
+        log("Nuevo registro");
+      }
+      
+      // Habilitar todos los campos
+      document.getElementById("num").disabled = false;
+      document.getElementById("unitario").disabled = false;
+      document.getElementById("columnaL").disabled = false;
+      document.getElementById("tipo").disabled = false;
+      document.getElementById("tipoPersonal").disabled = false;
+      document.getElementById("guardar").disabled = false;
+    }
+
+    async function guardarDatos() {
+      const btn = document.getElementById("guardar");
+      btn.disabled = true;
+      btn.textContent = "Guardando...";
+      
+      const payload = {
+        subproyecto: document.getElementById("subproyecto").value,
+        rol: document.getElementById("rol").value,
+        num: document.getElementById("num").value,
+        unitario: document.getElementById("unitario").value.replace(/[^\d.]/g, '') || "", // Limpiar formato
+        columnaL: document.getElementById("columnaL").value.replace(/[^\d.]/g, '') || "", // Limpiar formato
+        tipo: document.getElementById("tipo").value,
+        tipoPersonal: document.getElementById("tipoPersonal").value,
+        row: document.getElementById("formulario").dataset.rowIndex ? 
+             parseInt(document.getElementById("formulario").dataset.rowIndex) : null
+      };
+      
+      log("Guardando (incluyendo todas las columnas):");
+      log(payload);
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        log("Respuesta guardado:");
+        log(data);
+        
+        if (data.status === "ok") {
+          showStatus("✅ Guardado correctamente (incluyendo columnas L, M y N)");
+          await cargarDatos();
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (error) {
+        log("❌ Error guardando: " + error.message);
+        showStatus("Error: " + error.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Guardar";
+      }
+    }
+
+    // Inicializar y agregar eventos para cálculo automático
+    window.addEventListener('load', () => {
+      cargarDatos();
+      
+      // Agregar evento para cálculo automático cuando cambie el número
+      document.getElementById("num").addEventListener('input', calculateTotal);
+    });
+  </script>
 </body>
 </html>
