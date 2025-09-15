@@ -4,30 +4,11 @@
   <meta charset="UTF-8">
   <title>Formulario Looker</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, select, button {
-      width: 300px;
-      padding: 6px;
-      margin-top: 4px;
-    }
-    button {
-      width: 150px;
-      margin-top: 15px;
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { width: 300px; padding: 6px; margin-top: 4px; }
+    button { width: 150px; margin-top: 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
@@ -40,43 +21,49 @@
     </select>
 
     <label for="rol">Rol:</label>
-    <select id="rol" name="rol" required>
+    <select id="rol" name="rol" required disabled>
       <option value="">Seleccione...</option>
     </select>
     
     <label for="num">Número:</label>
-    <input type="text" id="num" name="num" readonly>
+    <input type="text" id="num" name="num" disabled>
     
     <label for="unitario">Valor Unitario:</label>
-    <input type="text" id="unitario" name="unitario" readonly>
+    <input type="text" id="unitario" name="unitario" disabled>
 
-    <button type="submit">Guardar</button>
+    <button type="submit" id="guardar">Guardar</button>
   </form>
 
   <script>
+    // === CONFIG ===
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
-    let registros = {};
+    // Asegúrate de cambiar API_URL por la URL de tu despliegue si es necesario.
 
-    // 👉 Cargar datos iniciales
+    // registros: array plano con objetos { subproyecto, rol, num, unitario, row }
+    let registros = [];
+
+    // ====== CARGA INICIAL ======
     async function cargarDatos() {
       try {
         const resp = await fetch(API_URL);
         const data = await resp.json();
-
         console.log("✅ Respuesta del backend:", data);
 
-        if (data.status === "ok" && data.data) {
-          // Guardamos el objeto tal como viene del backend
-          registros = data.data;
+        if (data.status === "ok" && Array.isArray(data.subproyectos)) {
+          registros = Array.isArray(data.registros) ? data.registros : [];
 
-          // llenar subproyectos en el select
+          // Llenar select subproyectos (limpiamos antes)
           const select = document.getElementById("subproyecto");
-          Object.keys(registros).forEach(sp => {
+          select.innerHTML = '<option value="">Seleccione...</option>';
+          data.subproyectos.forEach(sp => {
             const opt = document.createElement("option");
             opt.value = sp;
             opt.textContent = sp;
             select.appendChild(opt);
           });
+
+          // Reset estado dependientes
+          resetRolYCampos();
         } else {
           console.error("❌ Error en datos iniciales:", data);
           alert("No se pudieron cargar los datos iniciales.");
@@ -86,59 +73,119 @@
         alert("Error de conexión al cargar datos iniciales.");
       }
     }
-    
-    // 👉 Cuando selecciona un subproyecto
-    document.getElementById("subproyecto").addEventListener("change", function () {
-      const seleccionado = this.value;
 
+    function resetRolYCampos() {
       const rolSelect = document.getElementById("rol");
       rolSelect.innerHTML = '<option value="">Seleccione...</option>';
+      rolSelect.disabled = true;
 
-      if (registros[seleccionado]) {
-        registros[seleccionado].forEach(r => {
-          const opt = document.createElement("option");
-          opt.value = r.rol;
-          opt.textContent = r.rol;
-          rolSelect.appendChild(opt);
-        });
+      const num = document.getElementById("num");
+      const unitario = document.getElementById("unitario");
+      num.value = "";
+      unitario.value = "";
+      num.disabled = true;
+      unitario.disabled = true;
+
+      delete document.getElementById("formulario").dataset.rowIndex;
+    }
+
+    // ====== CUANDO CAMBIA SUBPROYECTO ======
+    document.getElementById("subproyecto").addEventListener("change", function () {
+      const seleccionado = this.value;
+      const rolSelect = document.getElementById("rol");
+
+      // limpiar roles
+      rolSelect.innerHTML = '<option value="">Seleccione...</option>';
+
+      if (!seleccionado) {
+        rolSelect.disabled = true;
+        resetRolYCampos();
+        return;
       }
 
-      // Limpiar campos dependientes
+      // obtener roles únicos para el subproyecto
+      const roles = [...new Set(registros
+        .filter(r => r.subproyecto === seleccionado && r.rol !== undefined && r.rol !== null && String(r.rol).trim() !== "")
+        .map(r => r.rol))];
+
+      if (roles.length === 0) {
+        rolSelect.disabled = true;
+      } else {
+        roles.forEach(rol => {
+          const opt = document.createElement("option");
+          opt.value = rol;
+          opt.textContent = rol;
+          rolSelect.appendChild(opt);
+        });
+        rolSelect.disabled = false;
+      }
+
+      // limpiar campos dependientes
       document.getElementById("num").value = "";
       document.getElementById("unitario").value = "";
+      document.getElementById("num").disabled = true;
+      document.getElementById("unitario").disabled = true;
+      delete document.getElementById("formulario").dataset.rowIndex;
     });
-    
-    // 👉 Cuando selecciona un rol
+
+    // ====== CUANDO CAMBIA ROL ======
     document.getElementById("rol").addEventListener("change", function () {
       const subproyectoSel = document.getElementById("subproyecto").value;
       const rolSel = this.value;
 
-      if (registros[subproyectoSel]) {
-        const registro = registros[subproyectoSel].find(r => r.rol === rolSel);
-
-        if (registro) {
-          document.getElementById("num").value = registro.num;
-          document.getElementById("unitario").value = registro.unitario;
-          return;
-        }
+      if (!subproyectoSel || !rolSel) {
+        document.getElementById("num").value = "";
+        document.getElementById("unitario").value = "";
+        document.getElementById("num").disabled = true;
+        document.getElementById("unitario").disabled = true;
+        delete document.getElementById("formulario").dataset.rowIndex;
+        return;
       }
 
-      // Si no encuentra, limpiar
-      document.getElementById("num").value = "";
-      document.getElementById("unitario").value = "";
+      // buscar registro exacto (si hay múltiples, toma el primero)
+      const registro = registros.find(r => r.subproyecto === subproyectoSel && r.rol === rolSel);
+
+      if (registro) {
+        document.getElementById("num").value = registro.num !== undefined ? registro.num : "";
+        document.getElementById("unitario").value = registro.unitario !== undefined ? registro.unitario : "";
+        document.getElementById("num").disabled = false;
+        document.getElementById("unitario").disabled = false;
+        // guardamos el índice de fila para actualizar después
+        document.getElementById("formulario").dataset.rowIndex = registro.row;
+      } else {
+        // rol sin registro existente (posible), permitimos editar y luego crear
+        document.getElementById("num").value = "";
+        document.getElementById("unitario").value = "";
+        document.getElementById("num").disabled = false;
+        document.getElementById("unitario").disabled = false;
+        delete document.getElementById("formulario").dataset.rowIndex;
+      }
     });
-    
-    // 👉 Guardar datos (POST al backend)
+
+    // ====== GUARDAR (POST) ======
     document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
-    
+      const btn = document.getElementById("guardar");
+      btn.disabled = true;
+
+      const subproyecto = document.getElementById("subproyecto").value;
+      const rol = document.getElementById("rol").value;
+      const num = document.getElementById("num").value;
+      const unitario = document.getElementById("unitario").value;
+      const rowIndex = this.dataset.rowIndex ? parseInt(this.dataset.rowIndex, 10) : null;
+
+      // validaciones mínimas
+      if (!subproyecto) { alert("Seleccione un subproyecto."); btn.disabled = false; return; }
+      if (!rol) { alert("Seleccione un rol."); btn.disabled = false; return; }
+
       const payload = {
-        subproyecto: document.getElementById("subproyecto").value,
-        rol: document.getElementById("rol").value,
-        num: document.getElementById("num").value,
-        unitario: document.getElementById("unitario").value
+        subproyecto: subproyecto,
+        rol: rol,
+        num: num,
+        unitario: unitario,
+        row: rowIndex // null si es nuevo
       };
-    
+
       try {
         const resp = await fetch(API_URL, {
           method: "POST",
@@ -146,20 +193,36 @@
           body: JSON.stringify(payload)
         });
         const data = await resp.json();
-    
+        console.log("Respuesta POST:", data);
+
         if (data.status === "ok") {
-          alert("✅ Registro guardado correctamente.");
-          document.getElementById("formulario").reset();
+          alert(data.message || "✅ Guardado correctamente.");
+          // recargar datos para mantener sincronía con la hoja
+          await cargarDatos();
+
+          // opcional: volver a seleccionar el subproyecto actual para que el usuario vea los roles
+          if (subproyecto) {
+            document.getElementById("subproyecto").value = subproyecto;
+            // disparar change para volver a llenar roles
+            document.getElementById("subproyecto").dispatchEvent(new Event('change'));
+            // re-seleccionar rol (si existe)
+            if (rol) {
+              document.getElementById("rol").value = rol;
+              document.getElementById("rol").dispatchEvent(new Event('change'));
+            }
+          }
         } else {
-          alert("❌ Error al guardar: " + data.message);
+          alert("❌ Error al guardar: " + (data.message || "respuesta desconocida"));
         }
       } catch (err) {
         console.error("❌ Error al guardar:", err);
         alert("Error de conexión al guardar.");
+      } finally {
+        btn.disabled = false;
       }
     });
 
-    // 👉 Ejecutar carga inicial
+    // Ejecutar carga inicial
     cargarDatos();
   </script>
 </body>
