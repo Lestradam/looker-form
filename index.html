@@ -9,48 +9,40 @@
     label { display: block; margin-top: 15px; font-weight: bold; }
     input, select { width: 100%; padding: 10px; margin-top: 4px; box-sizing: border-box; }
     button { width: 100%; margin-top: 20px; padding: 12px; background: #007bff; color: white; border: none; cursor: pointer; }
-    .debug { margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    button:disabled { background: #cccccc; cursor: not-allowed; }
     .status { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
     .debug-section { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 2px solid #0066cc; border-radius: 5px; }
     .debug-title { font-weight: bold; color: #0066cc; margin-bottom: 10px; }
+    .debug { margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; font-family: monospace; font-size: 11px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Formulario Looker - Versión Debug</h2>
     
-    <button onclick="testConnection()">🧪 Test Conexión</button>
-    <button onclick="showFullDebug()">📊 Mostrar Debug Completo</button>
-
     <form id="formulario" onsubmit="return false;">
-      <label>Subproyecto:</label>
+      <label for="subproyecto">Subproyecto:</label>
       <select id="subproyecto" onchange="onSubproyectoChange()">
         <option value="">Cargando...</option>
       </select>
 
-      <label>Rol:</label>
+      <label for="rol">Rol:</label>
       <select id="rol" disabled onchange="onRolChange()">
         <option value="">Seleccione subproyecto primero</option>
       </select>
       
-      <label>Número:</label>
-      <input type="text" id="num" disabled>
+      <label for="num">Número (#):</label>
+      <input type="number" id="num" disabled>
       
-      <label>Valor Unitario:</label>
-      <input type="text" id="unitario" disabled>
+      <label for="unitario">Valor Unitario:</label>
+      <input type="number" step="any" id="unitario" disabled>
 
       <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
     </form>
     
     <div id="status" class="status"></div>
-    
-    <!-- Sección de debug mejorada -->
-    <div class="debug-section">
-      <div class="debug-title">🔍 INFORMACIÓN DE DEBUG</div>
-      <div id="debug-info">No hay información de debug disponible</div>
-    </div>
     
     <div class="debug-section">
       <div class="debug-title">📝 LOG DE ACTIVIDAD</div>
@@ -59,17 +51,19 @@
   </div>
 
   <script>
-    // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
-    const API_URL = "https://script.google.com/macros/s/AKfycbwMGpqS6Idm0arwXCS7lhXFjbjiTdhfvPpVyHSBh2h4KchPUsAkN4bVyazouAUGNwwD/exec";
+    // ==============================================================================
+    //        !!! IMPORTANTE: CAMBIA ESTA URL POR LA NUEVA DE TU DESPLIEGUE !!!
+    // ==============================================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbwSt6LwtPfBrBNpnjGNAPuwEs4Zn467RLaAdDq8DDFUqw8J8EG1l6b-5MuPVmioCpjZ/exec";
     
     let registros = [];
     let subproyectos = [];
-    let lastResponse = null; // Para guardar la última respuesta completa
 
     function log(message) {
       const timestamp = new Date().toLocaleTimeString();
       const debugDiv = document.getElementById("debug");
-      debugDiv.textContent += `${timestamp}: ${JSON.stringify(message)}\n`;
+      const messageStr = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
+      debugDiv.textContent += `${timestamp}: ${messageStr}\n`;
       debugDiv.scrollTop = debugDiv.scrollHeight;
       console.log(message);
     }
@@ -82,82 +76,17 @@
       setTimeout(() => statusDiv.style.display = 'none', 5000);
     }
 
-    function showFullDebug() {
-      if (lastResponse && lastResponse.debug) {
-        const debugInfo = document.getElementById("debug-info");
-        debugInfo.innerHTML = `
-          <strong>📊 Información de la Hoja:</strong><br>
-          • Total de filas: ${lastResponse.debug.totalFilas}<br>
-          • Total de columnas: ${lastResponse.debug.totalColumnas}<br>
-          • Subproyectos únicos: ${lastResponse.debug.subproyectosUnicos}<br>
-          • Total registros: ${lastResponse.debug.totalRegistros}<br>
-          • Registros con rol: ${lastResponse.debug.registrosConRol}<br><br>
-          
-          <strong>📋 Encabezados encontrados:</strong><br>
-          ${lastResponse.debug.encabezados.map((h, i) => `Col ${i+1}: "${h}"`).join('<br>')}<br><br>
-          
-          <strong>🎯 Columnas utilizadas:</strong><br>
-          • Subproyecto: Columna ${lastResponse.debug.columnasUsadas.subproyecto}<br>
-          • Rol: Columna ${lastResponse.debug.columnasUsadas.rol}<br>
-          • Número: Columna ${lastResponse.debug.columnasUsadas.num}<br>
-          • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br><br>
-          
-          <strong>📝 Primeros 3 registros:</strong><br>
-          ${lastResponse.debug.primeros3Registros ? 
-            lastResponse.debug.primeros3Registros.map(r => 
-              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | "${r.unitario}"`
-            ).join('<br>') : 'No hay registros'}
-        `;
-      } else {
-        document.getElementById("debug-info").innerHTML = "❌ No hay información de debug. Ejecuta 'Cargar Datos' primero.";
-      }
-    }
-
-    async function testConnection() {
-      log("🧪 Probando conexión...");
-      try {
-        const response = await fetch(API_URL);
-        log("Response status: " + response.status);
-        log("Response headers: " + JSON.stringify([...response.headers.entries()]));
-        
-        const text = await response.text();
-        log("Response text (primeros 500 chars): " + text.substring(0, 500));
-        
-        try {
-          const json = JSON.parse(text);
-          log("JSON parseado exitosamente");
-          log("Estructura completa del JSON:");
-          log(json);
-          
-          // Mostrar debug si está disponible
-          if (json.debug) {
-            log("=== INFORMACIÓN DE DEBUG ===");
-            log("Total filas: " + json.debug.totalFilas);
-            log("Total columnas: " + json.debug.totalColumnas);
-            log("Encabezados: " + JSON.stringify(json.debug.encabezados));
-            log("Columnas usadas: " + JSON.stringify(json.debug.columnasUsadas));
-            log("Registros encontrados: " + json.debug.totalRegistros);
-            log("Primeros 3 registros: " + JSON.stringify(json.debug.primeros3Registros));
-          }
-          
-        } catch(e) {
-          log("Error parseando JSON: " + e.message);
-        }
-      } catch (error) {
-        log("❌ Error de conexión: " + error.message);
-      }
-    }
-
     async function cargarDatos() {
       log("Cargando datos...");
+      document.getElementById("subproyecto").innerHTML = '<option value="">Cargando...</option>';
       try {
         const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
         
-        // Guardar la respuesta completa para debug
-        lastResponse = data;
-        
-        log("Datos recibidos (estructura completa):");
+        log("Datos recibidos del servidor:");
         log(data);
 
         if (data.status === "ok") {
@@ -165,7 +94,7 @@
           registros = data.registros || [];
           
           const select = document.getElementById("subproyecto");
-          select.innerHTML = '<option value="">Seleccione...</option>';
+          select.innerHTML = '<option value="">Seleccione un subproyecto...</option>';
           
           subproyectos.forEach(sp => {
             const opt = document.createElement("option");
@@ -174,18 +103,13 @@
             select.appendChild(opt);
           });
           
-          log(`✅ Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
-          showStatus(`Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
-          
-          // Actualizar info de debug automáticamente
-          showFullDebug();
-          
+          showStatus(`Carga completa: ${subproyectos.length} subproyectos encontrados.`);
         } else {
-          throw new Error(data.message || "Error del servidor");
+          throw new Error(data.message || "El servidor devolvió un error");
         }
       } catch (error) {
         log("❌ Error cargando datos: " + error.message);
-        showStatus("Error: " + error.message, true);
+        showStatus("Error al cargar datos: " + error.message, true);
         document.getElementById("subproyecto").innerHTML = '<option value="">Error al cargar</option>';
       }
     }
@@ -194,7 +118,8 @@
       const subproyecto = document.getElementById("subproyecto").value;
       const rolSelect = document.getElementById("rol");
       
-      log(`Subproyecto seleccionado: ${subproyecto}`);
+      log(`Subproyecto seleccionado: "${subproyecto}"`);
+      resetFields(); // Resetea los campos al cambiar de subproyecto
       
       if (!subproyecto) {
         rolSelect.innerHTML = '<option value="">Seleccione subproyecto primero</option>';
@@ -203,14 +128,11 @@
       }
 
       const registrosDelSub = registros.filter(r => r.subproyecto === subproyecto);
-      const roles = [...new Set(registrosDelSub.map(r => r.rol).filter(r => r && r.trim()))];
+      const roles = [...new Set(registrosDelSub.map(r => r.rol).filter(rol => rol && rol.trim()))];
       
-      log(`Encontrados ${roles.length} roles para este subproyecto:`);
-      log(roles);
-      log("Registros del subproyecto:");
-      log(registrosDelSub);
+      log(`Roles encontrados para este subproyecto: ${roles.join(', ')}`);
       
-      rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
+      rolSelect.innerHTML = '<option value="">Seleccione un rol...</option>';
       roles.forEach(rol => {
         const opt = document.createElement("option");
         opt.value = rol;
@@ -225,7 +147,10 @@
       const subproyecto = document.getElementById("subproyecto").value;
       const rol = document.getElementById("rol").value;
       
-      if (!subproyecto || !rol) return;
+      if (!subproyecto || !rol) {
+        resetFields();
+        return;
+      }
       
       const registro = registros.find(r => r.subproyecto === subproyecto && r.rol === rol);
       
@@ -233,18 +158,24 @@
         document.getElementById("num").value = registro.num || "";
         document.getElementById("unitario").value = registro.unitario || "";
         document.getElementById("formulario").dataset.rowIndex = registro.row;
-        log(`Cargando datos de fila ${registro.row}:`);
-        log(registro);
+        log(`Datos cargados para el rol "${rol}" (Fila: ${registro.row})`);
+        
+        document.getElementById("num").disabled = false;
+        document.getElementById("unitario").disabled = false;
+        document.getElementById("guardar").disabled = false;
       } else {
-        document.getElementById("num").value = "";
-        document.getElementById("unitario").value = "";
-        delete document.getElementById("formulario").dataset.rowIndex;
-        log("Nuevo registro");
+        log(`No se encontró un registro para la combinación seleccionada.`);
+        resetFields();
       }
-      
-      document.getElementById("num").disabled = false;
-      document.getElementById("unitario").disabled = false;
-      document.getElementById("guardar").disabled = false;
+    }
+
+    function resetFields() {
+      document.getElementById("num").value = "";
+      document.getElementById("unitario").value = "";
+      document.getElementById("num").disabled = true;
+      document.getElementById("unitario").disabled = true;
+      document.getElementById("guardar").disabled = true;
+      delete document.getElementById("formulario").dataset.rowIndex;
     }
 
     async function guardarDatos() {
@@ -253,48 +184,50 @@
       btn.textContent = "Guardando...";
       
       const payload = {
-        subproyecto: document.getElementById("subproyecto").value,
-        rol: document.getElementById("rol").value,
         num: document.getElementById("num").value,
         unitario: document.getElementById("unitario").value,
         row: document.getElementById("formulario").dataset.rowIndex ? 
              parseInt(document.getElementById("formulario").dataset.rowIndex) : null
       };
       
-      log("Guardando:");
+      log("Enviando datos para guardar:");
       log(payload);
       
       try {
         const response = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          // Google Apps Script a veces necesita 'redirect: "follow"'
+          redirect: "follow" 
         });
         
         const data = await response.json();
-        log("Respuesta guardado:");
+        log("Respuesta del servidor al guardar:");
         log(data);
         
         if (data.status === "ok") {
-          showStatus("✅ Guardado correctamente");
-          await cargarDatos();
+          showStatus("✅ ¡Datos guardados correctamente!");
+          // Actualiza el registro local para no tener que recargar todo
+          const rowIndexInArray = registros.findIndex(r => r.row === payload.row);
+          if (rowIndexInArray !== -1) {
+              registros[rowIndexInArray].num = payload.num;
+              registros[rowIndexInArray].unitario = payload.unitario;
+          }
         } else {
-          throw new Error(data.message);
+          throw new Error(data.message || "Error desconocido al guardar");
         }
       } catch (error) {
         log("❌ Error guardando: " + error.message);
-        showStatus("Error: " + error.message, true);
+        showStatus("Error al guardar: " + error.message, true);
       } finally {
         btn.disabled = false;
         btn.textContent = "Guardar";
       }
     }
 
-    // Inicializar
+    // Inicializar la aplicación al cargar la página
     window.addEventListener('load', cargarDatos);
   </script>
 </body>
 </html>
-
-
-
