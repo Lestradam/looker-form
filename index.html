@@ -463,8 +463,7 @@
         const resp = await fetch(API_URL, {
           method: "POST",
           headers: { 
-            "Content-Type": "application/json",
-            'Cache-Control': 'no-cache'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(payload)
         });
