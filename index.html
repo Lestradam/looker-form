@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Editor de Subproyectos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, button { padding: 5px; margin-top: 5px; }
+    .result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>Editar Subproyecto</h2>
+
+  <label for="subproyecto">Subproyecto:</label>
+  <input type="text" id="subproyecto" placeholder="Escribe el subproyecto...">
+  <button onclick="buscar()">Buscar</button>
+
+  <div id="result" class="result" style="display:none;">
+    <p><b>Rol:</b> <span id="rol"></span></p>
+    <p><b>#:</b> <span id="num"></span></p>
+    
+    <label for="unitario">Unitario:</label>
+    <input type="number" id="unitario">
+    
+    <button onclick="guardar()">Guardar cambios</button>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlPCSnR4bX8zUyi-M0BDCMQ8KdGTCLhjmDbAuXMZAlU5J6wX0a4yUhFroeyWIb_8ae/exec"; // pega aquí el link de tu WebApp publicado
+
+    let fila = null; // guardamos la fila para el update
+
+    async function buscar() {
+      const subproyecto = document.getElementById("subproyecto").value;
+      const res = await fetch(`${API_URL}?subproyecto=${encodeURIComponent(subproyecto)}`);
+      const data = await res.json();
+
+      if (data.status === "ok") {
+        document.getElementById("rol").textContent = data.rol;
+        document.getElementById("num").textContent = data.num;
+        document.getElementById("unitario").value = data.unitario;
+        fila = data.fila;
+        document.getElementById("result").style.display = "block";
+      } else {
+        alert(data.message);
+      }
+    }
+
+    async function guardar() {
+      const unitario = document.getElementById("unitario").value;
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ fila, unitario })
+      });
+      const data = await res.json();
+
+      if (data.status === "ok") {
+        alert("✅ " + data.message);
+      } else {
+        alert("❌ Error al guardar");
+      }
+    }
+  </script>
+</body>
+</html>
