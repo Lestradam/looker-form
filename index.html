@@ -65,12 +65,13 @@
     
         console.log("✅ Respuesta del backend:", data);
     
-        if (data.status === "ok" && data.subproyectos) {
-          registros = data.registros || []; // 👈 guardamos todo
+        if (data.status === "ok" && data.data) {
+          // Guardamos todo el objeto de subproyectos con sus roles
+          registros = data.data;
     
           // llenar subproyectos en el select
           const select = document.getElementById("subproyecto");
-          data.subproyectos.forEach(sp => {
+          Object.keys(registros).forEach(sp => {
             const opt = document.createElement("option");
             opt.value = sp;
             opt.textContent = sp;
@@ -90,40 +91,42 @@
     document.getElementById("subproyecto").addEventListener("change", function () {
       const seleccionado = this.value;
     
-      // Filtrar registros que coincidan con el subproyecto
-      const rolesDisponibles = registros.filter(r => r.subproyecto === seleccionado);
-    
       const rolSelect = document.getElementById("rol");
       rolSelect.innerHTML = '<option value="">Seleccione...</option>';
     
-      rolesDisponibles.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r.rol;
-        opt.textContent = r.rol;
-        rolSelect.appendChild(opt);
-      });
+      if (registros[seleccionado]) {
+        registros[seleccionado].forEach(r => {
+          const opt = document.createElement("option");
+          opt.value = r.rol;
+          opt.textContent = r.rol;
+          rolSelect.appendChild(opt);
+        });
+      }
     
       // Limpiar campos dependientes
       document.getElementById("num").value = "";
       document.getElementById("unitario").value = "";
     });
+
     
     // 👉 Cuando selecciona un rol
     document.getElementById("rol").addEventListener("change", function () {
       const subproyectoSel = document.getElementById("subproyecto").value;
       const rolSel = this.value;
     
-      // Buscar el registro exacto
-      const registro = registros.find(r => r.subproyecto === subproyectoSel && r.rol === rolSel);
+      if (registros[subproyectoSel]) {
+        const registro = registros[subproyectoSel].find(r => r.rol === rolSel);
     
-      if (registro) {
-        document.getElementById("num").value = registro.num;
-        document.getElementById("unitario").value = registro.unitario;
-      } else {
-        console.warn("⚠️ No se encontró info para:", subproyectoSel, rolSel);
-        document.getElementById("num").value = "";
-        document.getElementById("unitario").value = "";
+        if (registro) {
+          document.getElementById("num").value = registro.num;
+          document.getElementById("unitario").value = registro.unitario;
+          return;
+        }
       }
+    
+      // Si no encuentra, limpiar
+      document.getElementById("num").value = "";
+      document.getElementById("unitario").value = "";
     });
     
     // 👉 Guardar datos (POST al backend)
@@ -163,3 +166,4 @@
   </script>
 </body>
 </html>
+
