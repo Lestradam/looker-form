@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -34,44 +33,35 @@
 
     let fila = null; 
 
-   // ✅ Poblar roles al cargar la página
-async function cargarRoles() {
-  try {
-    const res = await fetch(`${API_URL}?action=getRoles`);
-    const data = await res.json();
-    if (data.status === "ok") {
-      const select = document.getElementById("rol");
-      select.innerHTML = ""; // limpiar
-      data.roles.forEach(r => {
-        const option = document.createElement("option");
-        option.value = r;
-        option.textContent = r;
-        select.appendChild(option);
-      });
-    }
-  } catch (err) {
-    alert("Error al cargar roles ❌");
-  }
-}
+    window.onload = async () => {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
 
-window.onload = async () => {
-  await cargarRoles(); // primero roles
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    if (data.status === "ok") {
-      const select = document.getElementById("subproyecto");
-      data.subproyectos.forEach(sp => {
-        const option = document.createElement("option");
-        option.value = sp;
-        option.textContent = sp;
-        select.appendChild(option);
-      });
-    }
-  } catch (err) {
-    alert("Error al cargar subproyectos ❌");
-  }
-};
+        if (data.status === "ok") {
+          // Poblar roles
+          const rolSelect = document.getElementById("rol");
+          rolSelect.innerHTML = ""; // limpiar
+          data.roles.forEach(r => {
+            const option = document.createElement("option");
+            option.value = r;
+            option.textContent = r;
+            rolSelect.appendChild(option);
+          });
+
+          // Poblar subproyectos
+          const subproyectoSelect = document.getElementById("subproyecto");
+          data.subproyectos.forEach(sp => {
+            const option = document.createElement("option");
+            option.value = sp;
+            option.textContent = sp;
+            subproyectoSelect.appendChild(option);
+          });
+        }
+      } catch (err) {
+        alert("Error al cargar datos iniciales ❌");
+      }
+    };
 
 // ✅ Cuando busques un subproyecto, selecciona el rol correspondiente
 async function buscar() {
