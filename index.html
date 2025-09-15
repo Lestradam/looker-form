@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,53 +29,68 @@
   </div>
 
   <script>
+    // ✅ URL de tu WebApp de Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbxlPCSnR4bX8zUyi-M0BDCMQ8KdGTCLhjmDbAuXMZAlU5J6wX0a4yUhFroeyWIb_8ae/exec"; 
 
     let fila = null; 
 
-    // 🔹 Al cargar la página → poblar desplegable
+    // 🔹 Poblar desplegable al cargar la página
     window.onload = async () => {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      if (data.status === "ok") {
-        const select = document.getElementById("subproyecto");
-        data.subproyectos.forEach(sp => {
-          const option = document.createElement("option");
-          option.value = sp;
-          option.textContent = sp;
-          select.appendChild(option);
-        });
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        if (data.status === "ok") {
+          const select = document.getElementById("subproyecto");
+          data.subproyectos.forEach(sp => {
+            const option = document.createElement("option");
+            option.value = sp;
+            option.textContent = sp;
+            select.appendChild(option);
+          });
+        }
+      } catch (err) {
+        alert("Error al cargar subproyectos ❌");
       }
     };
 
+    // 🔹 Buscar datos de un subproyecto
     async function buscar() {
       const subproyecto = document.getElementById("subproyecto").value;
-      const res = await fetch(`${API_URL}?subproyecto=${encodeURIComponent(subproyecto)}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`${API_URL}?subproyecto=${encodeURIComponent(subproyecto)}`);
+        const data = await res.json();
 
-      if (data.status === "ok") {
-        document.getElementById("rol").textContent = data.rol;
-        document.getElementById("num").textContent = data.num;
-        document.getElementById("unitario").value = data.unitario;
-        fila = data.fila;
-        document.getElementById("result").style.display = "block";
-      } else {
-        alert(data.message);
+        if (data.status === "ok") {
+          document.getElementById("rol").textContent = data.rol;
+          document.getElementById("num").textContent = data.num;
+          document.getElementById("unitario").value = data.unitario;
+          fila = data.fila;
+          document.getElementById("result").style.display = "block";
+        } else {
+          alert(data.message);
+        }
+      } catch (err) {
+        alert("Error al buscar datos ❌");
       }
     }
 
+    // 🔹 Guardar cambios en Unitario
     async function guardar() {
       const unitario = document.getElementById("unitario").value;
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ fila, unitario })
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ fila, unitario })
+        });
+        const data = await res.json();
 
-      if (data.status === "ok") {
-        alert("✅ " + data.message);
-      } else {
-        alert("❌ Error al guardar");
+        if (data.status === "ok") {
+          alert("✅ " + data.message);
+        } else {
+          alert("❌ Error al guardar");
+        }
+      } catch (err) {
+        alert("Error al guardar datos ❌");
       }
     }
   </script>
