@@ -14,11 +14,15 @@
 
   <form id="registroForm">
     <label>Subproyecto:
-      <select id="subproyectoSelect" required></select>
+      <select id="subproyectoSelect" required>
+        <option>Cargando...</option>
+      </select>
     </label>
 
     <label>Rol:
-      <select id="rolSelect" required></select>
+      <select id="rolSelect" required>
+        <option>Cargando...</option>
+      </select>
     </label>
 
     <label>#:
@@ -33,43 +37,62 @@
   </form>
 
   <script>
-    // 🔹 Pega aquí tu URL del WebApp de Apps Script
+    // 🔹 Pega aquí tu URL del WebApp de Apps Script (debe terminar en /exec)
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
 
-    // 🔹 Cargar roles y subproyectos en una sola llamada
-    window.onload = async () => {
+    // 🔹 Función para poblar selects
+    function poblarSelects(data) {
+      // Subproyectos
+      const subSel = document.getElementById("subproyectoSelect");
+      subSel.innerHTML = "<option value=''>Seleccione...</option>";
+      (data.subproyectos || []).forEach(sp => {
+        const option = document.createElement("option");
+        option.value = sp;
+        option.textContent = sp;
+        subSel.appendChild(option);
+      });
+
+      // Roles
+      const rolSel = document.getElementById("rolSelect");
+      rolSel.innerHTML = "<option value=''>Seleccione...</option>";
+      (data.roles || []).forEach(r => {
+        const option = document.createElement("option");
+        option.value = r;
+        option.textContent = r;
+        rolSel.appendChild(option);
+      });
+    }
+
+    // 🔹 Cargar datos iniciales con caché
+    async function cargarDatos() {
       try {
+        // 1. Ver si hay cache
+        const cache = localStorage.getItem("formCache");
+        if (cache) {
+          const cachedData = JSON.parse(cache);
+          poblarSelects(cachedData);
+        }
+
+        // 2. Siempre intenta pedir al servidor para refrescar
         const res = await fetch(API_URL);
         const data = await res.json();
 
         if (data.status === "ok") {
-          // Poblar subproyectos
-          const subSel = document.getElementById("subproyectoSelect");
-          subSel.innerHTML = "<option value=''>Seleccione...</option>";
-          data.subproyectos.forEach(sp => {
-            const option = document.createElement("option");
-            option.value = sp;
-            option.textContent = sp;
-            subSel.appendChild(option);
-          });
-
-          // Poblar roles
-          const rolSel = document.getElementById("rolSelect");
-          rolSel.innerHTML = "<option value=''>Seleccione...</option>";
-          data.roles.forEach(r => {
-            const option = document.createElement("option");
-            option.value = r;
-            option.textContent = r;
-            rolSel.appendChild(option);
-          });
+          poblarSelects(data);
+          // Guardar en caché por 10 min
+          localStorage.setItem("formCache", JSON.stringify(data));
+          localStorage.setItem("formCacheTime", Date.now());
         } else {
-          alert("❌ Error en datos iniciales");
+          console.error("Respuesta inesperada del servidor:", data);
+          alert("❌ Error en datos iniciales: " + (data.message || "sin detalle"));
         }
       } catch (err) {
         console.error("Error al cargar datos iniciales", err);
-        alert("❌ No se pudieron cargar datos iniciales");
+        if (!localStorage.getItem("formCache")) {
+          alert("❌ No se pudieron cargar datos iniciales");
+        }
       }
-    };
+    }
 
     // 🔹 Enviar formulario
     document.getElementById("registroForm").addEventListener("submit", async (e) => {
@@ -100,8 +123,9 @@
         alert("❌ No se pudo guardar");
       }
     });
+
+    // 🔹 Iniciar carga al abrir la página
+    window.onload = cargarDatos;
   </script>
 </body>
 </html>
-
-
