@@ -40,13 +40,15 @@
     </select>
 
     <label for="rol">Rol:</label>
-    <input type="text" id="rol" name="rol" required>
-
+    <select id="rol" name="rol" required>
+      <option value="">Seleccione...</option>
+    </select>
+    
     <label for="num">Número:</label>
-    <input type="number" id="num" name="num" required>
-
+    <input type="text" id="num" name="num" readonly>
+    
     <label for="unitario">Valor Unitario:</label>
-    <input type="number" id="unitario" name="unitario" required>
+    <input type="text" id="unitario" name="unitario" readonly>
 
     <button type="submit">Guardar</button>
   </form>
@@ -60,12 +62,13 @@
       try {
         const resp = await fetch(API_URL);
         const data = await resp.json();
-
+    
         console.log("✅ Respuesta del backend:", data);
-
+    
         if (data.status === "ok" && data.subproyectos) {
-          registros = data.registros || []; // 👈 si no viene, queda en []
-
+          registros = data.registros || []; // 👈 guardamos todo
+    
+          // llenar subproyectos en el select
           const select = document.getElementById("subproyecto");
           data.subproyectos.forEach(sp => {
             const opt = document.createElement("option");
@@ -82,35 +85,58 @@
         alert("Error de conexión al cargar datos iniciales.");
       }
     }
-
-    // Cuando selecciona un subproyecto, rellenar los campos
+    
+    // 👉 Cuando selecciona un subproyecto
     document.getElementById("subproyecto").addEventListener("change", function () {
       const seleccionado = this.value;
-      const registro = registros.find(r => r.subproyecto === seleccionado);
-
+    
+      // Filtrar registros que coincidan con el subproyecto
+      const rolesDisponibles = registros.filter(r => r.subproyecto === seleccionado);
+    
+      const rolSelect = document.getElementById("rol");
+      rolSelect.innerHTML = '<option value="">Seleccione...</option>';
+    
+      rolesDisponibles.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.rol;
+        opt.textContent = r.rol;
+        rolSelect.appendChild(opt);
+      });
+    
+      // Limpiar campos dependientes
+      document.getElementById("num").value = "";
+      document.getElementById("unitario").value = "";
+    });
+    
+    // 👉 Cuando selecciona un rol
+    document.getElementById("rol").addEventListener("change", function () {
+      const subproyectoSel = document.getElementById("subproyecto").value;
+      const rolSel = this.value;
+    
+      // Buscar el registro exacto
+      const registro = registros.find(r => r.subproyecto === subproyectoSel && r.rol === rolSel);
+    
       if (registro) {
-        document.getElementById("rol").value = registro.rol;
         document.getElementById("num").value = registro.num;
         document.getElementById("unitario").value = registro.unitario;
       } else {
-        console.warn("⚠️ No se encontró registro para:", seleccionado);
-        document.getElementById("rol").value = "";
+        console.warn("⚠️ No se encontró info para:", subproyectoSel, rolSel);
         document.getElementById("num").value = "";
         document.getElementById("unitario").value = "";
       }
     });
-
-    // Guardar datos (POST al backend)
+    
+    // 👉 Guardar datos (POST al backend)
     document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
-
+    
       const payload = {
         subproyecto: document.getElementById("subproyecto").value,
         rol: document.getElementById("rol").value,
         num: document.getElementById("num").value,
         unitario: document.getElementById("unitario").value
       };
-
+    
       try {
         const resp = await fetch(API_URL, {
           method: "POST",
@@ -118,7 +144,7 @@
           body: JSON.stringify(payload)
         });
         const data = await resp.json();
-
+    
         if (data.status === "ok") {
           alert("✅ Registro guardado correctamente.");
           document.getElementById("formulario").reset();
@@ -131,8 +157,10 @@
       }
     });
 
+
     // Ejecutar carga inicial
     cargarDatos();
   </script>
 </body>
 </html>
+
