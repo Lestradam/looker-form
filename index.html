@@ -14,15 +14,11 @@
 
   <form id="registroForm">
     <label>Subproyecto:
-      <select id="subproyectoSelect" required>
-        <option>Cargando...</option>
-      </select>
+      <select id="subproyectoSelect" required></select>
     </label>
 
     <label>Rol:
-      <select id="rolSelect" required>
-        <option>Cargando...</option>
-      </select>
+      <select id="rolSelect" required></select>
     </label>
 
     <label>#:
@@ -37,64 +33,71 @@
   </form>
 
   <script>
-    // 🔹 Pega aquí tu URL del WebApp de Apps Script (debe terminar en /exec)
-    const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
+    // 🔹 Pega aquí la URL publicada de tu WebApp de Apps Script (Deploy → Web App → Anyone)
+    const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec"; 
 
-    // 🔹 Función para poblar selects
-    function poblarSelects(data) {
-      // Subproyectos
-      const subSel = document.getElementById("subproyectoSelect");
-      subSel.innerHTML = "<option value=''>Seleccione...</option>";
-      (data.subproyectos || []).forEach(sp => {
-        const option = document.createElement("option");
-        option.value = sp;
-        option.textContent = sp;
-        subSel.appendChild(option);
-      });
+    let registros = []; // aquí guardamos todos los registros
 
-      // Roles
-      const rolSel = document.getElementById("rolSelect");
-      rolSel.innerHTML = "<option value=''>Seleccione...</option>";
-      (data.roles || []).forEach(r => {
-        const option = document.createElement("option");
-        option.value = r;
-        option.textContent = r;
-        rolSel.appendChild(option);
-      });
-    }
-
-    // 🔹 Cargar datos iniciales con caché
+    // 🔹 Cargar todos los registros al inicio
     async function cargarDatos() {
       try {
-        // 1. Ver si hay cache
-        const cache = localStorage.getItem("formCache");
-        if (cache) {
-          const cachedData = JSON.parse(cache);
-          poblarSelects(cachedData);
-        }
-
-        // 2. Siempre intenta pedir al servidor para refrescar
         const res = await fetch(API_URL);
         const data = await res.json();
 
         if (data.status === "ok") {
-          poblarSelects(data);
-          // Guardar en caché por 10 min
-          localStorage.setItem("formCache", JSON.stringify(data));
-          localStorage.setItem("formCacheTime", Date.now());
+          registros = data.registros;
+
+          // llenar subproyectos únicos
+          const subSel = document.getElementById("subproyectoSelect");
+          const subsUnicos = [...new Set(registros.map(r => r.subproyecto))];
+          subSel.innerHTML = "<option value=''>Seleccione...</option>";
+          subsUnicos.forEach(sp => {
+            const option = document.createElement("option");
+            option.value = sp;
+            option.textContent = sp;
+            subSel.appendChild(option);
+          });
         } else {
-          console.error("Respuesta inesperada del servidor:", data);
-          alert("❌ Error en datos iniciales: " + (data.message || "sin detalle"));
+          alert("❌ Error en datos iniciales: " + data.message);
         }
       } catch (err) {
         console.error("Error al cargar datos iniciales", err);
-        if (!localStorage.getItem("formCache")) {
-          alert("❌ No se pudieron cargar datos iniciales");
-        }
+        alert("❌ No se pudieron cargar datos iniciales");
       }
     }
 
-    // 🔹 Enviar formulario
+    // 🔹 Evento: cuando cambia el subproyecto → cargar roles
+    document.getElementById("subproyectoSelect").addEventListener("change", (e) => {
+      const sub = e.target.value;
+      const rolesFiltrados = registros.filter(r => r.subproyecto === sub);
+
+      const rolSel = document.getElementById("rolSelect");
+      rolSel.innerHTML = "<option value=''>Seleccione...</option>";
+      rolesFiltrados.forEach(r => {
+        const option = document.createElement("option");
+        option.value = r.rol;
+        option.textContent = r.rol;
+        rolSel.appendChild(option);
+      });
+
+      // limpiar num y unitario
+      document.getElementById("numero").value = "";
+      document.getElementById("unitario").value = "";
+    });
+
+    // 🔹 Evento: cuando cambia el rol → llenar num y unitario
+    document.getElementById("rolSelect").addEventListener("change", (e) => {
+      const sub = document.getElementById("subproyectoSelect").value;
+      const rol = e.target.value;
+
+      const reg = registros.find(r => r.subproyecto === sub && r.rol === rol);
+      if (reg) {
+        document.getElementById("numero").value = reg.num || "";
+        document.getElementById("unitario").value = reg.unitario || "";
+      }
+    });
+
+    // 🔹 Guardar nuevo registro en la hoja
     document.getElementById("registroForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const payload = {
@@ -124,7 +127,7 @@
       }
     });
 
-    // 🔹 Iniciar carga al abrir la página
+    // cargar datos iniciales al abrir la página
     window.onload = cargarDatos;
   </script>
 </body>
