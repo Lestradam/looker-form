@@ -57,7 +57,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
     let registros = [];
 
-    // 👉 Cargar datos iniciales
+    // Cargar datos iniciales
     async function cargarDatos() {
       try {
         const resp = await fetch(API_URL);
@@ -65,25 +65,12 @@
     
         console.log("✅ Respuesta del backend:", data);
     
-        if (data.status === "ok" && data.data) {
-          // Transformamos el objeto en un array plano
-          registros = [];
-          const subproyectos = Object.keys(data.data);
-
-          subproyectos.forEach(sp => {
-            data.data[sp].forEach(r => {
-              registros.push({
-                subproyecto: sp,
-                rol: r.rol,
-                num: r.num,
-                unitario: r.unitario
-              });
-            });
-          });
-
+        if (data.status === "ok" && data.subproyectos) {
+          registros = data.registros || []; // 👈 guardamos todo
+    
           // llenar subproyectos en el select
           const select = document.getElementById("subproyecto");
-          subproyectos.forEach(sp => {
+          data.subproyectos.forEach(sp => {
             const opt = document.createElement("option");
             opt.value = sp;
             opt.textContent = sp;
@@ -170,7 +157,8 @@
       }
     });
 
-    // 👉 Ejecutar carga inicial
+
+    // Ejecutar carga inicial
     cargarDatos();
   </script>
 </body>
