@@ -2,534 +2,227 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario Looker</title>
+  <title>Formulario Looker - Simple</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      background-color: #f5f5f5;
-    }
-    
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    h2 {
-      color: #333;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    
-    label { 
-      display: block; 
-      margin-top: 15px; 
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #555;
-    }
-    
-    input, select { 
-      width: 100%; 
-      padding: 10px; 
-      margin-top: 4px; 
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    
-    input:disabled, select:disabled {
-      background-color: #f8f8f8;
-      color: #999;
-      cursor: not-allowed;
-    }
-    
-    button { 
-      width: 100%; 
-      margin-top: 25px; 
-      background: #007bff; 
-      color: white; 
-      border: none; 
-      cursor: pointer;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 4px;
-      transition: background-color 0.3s;
-    }
-    
-    button:hover:not(:disabled) { 
-      background: #0056b3; 
-    }
-    
-    button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    
-    .debug {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    
-    .status {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 4px;
-      text-align: center;
-      display: none;
-    }
-    
-    .status.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    
-    .status.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    
-    .loading {
-      text-align: center;
-      color: #666;
-      font-style: italic;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select { width: 100%; padding: 10px; margin-top: 4px; box-sizing: border-box; }
+    button { width: 100%; margin-top: 20px; padding: 12px; background: #007bff; color: white; border: none; cursor: pointer; }
+    .debug { margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+    .status { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Formulario Looker</h2>
+    
+    <button onclick="testConnection()">🧪 Test Conexión</button>
 
-    <form id="formulario">
-      <label for="subproyecto">Subproyecto:</label>
-      <select id="subproyecto" name="subproyecto" required>
+    <form id="formulario" onsubmit="return false;">
+      <label>Subproyecto:</label>
+      <select id="subproyecto" onchange="onSubproyectoChange()">
         <option value="">Cargando...</option>
       </select>
 
-      <label for="rol">Rol:</label>
-      <select id="rol" name="rol" required disabled>
-        <option value="">Seleccione un subproyecto primero</option>
+      <label>Rol:</label>
+      <select id="rol" disabled onchange="onRolChange()">
+        <option value="">Seleccione subproyecto primero</option>
       </select>
       
-      <label for="num">Número:</label>
-      <input type="text" id="num" name="num" disabled placeholder="Ingrese el número">
+      <label>Número:</label>
+      <input type="text" id="num" disabled>
       
-      <label for="unitario">Valor Unitario:</label>
-      <input type="text" id="unitario" name="unitario" disabled placeholder="Ingrese el valor unitario">
+      <label>Valor Unitario:</label>
+      <input type="text" id="unitario" disabled>
 
-      <button type="submit" id="guardar" disabled>Guardar</button>
+      <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
     </form>
     
-    <div id="status"></div>
-    
-    <!-- Debug info -->
-    <div class="debug" id="debug">
-      Iniciando aplicación...
-    </div>
+    <div id="status" class="status"></div>
+    <div id="debug" class="debug">Iniciando aplicación...\n</div>
   </div>
 
   <script>
-    // === CONFIG ===
+    // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
     
-    // Variables globales
     let registros = [];
     let subproyectos = [];
-    let datosCompletos = {};
 
-    // Referencias a elementos DOM
-    const elementos = {
-      subproyecto: null,
-      rol: null,
-      num: null,
-      unitario: null,
-      guardar: null,
-      formulario: null,
-      debug: null,
-      status: null
-    };
-
-    // Función para mostrar debug info
-    function debug(message) {
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const debugDiv = document.getElementById("debug");
+      debugDiv.textContent += `${timestamp}: ${JSON.stringify(message)}\n`;
+      debugDiv.scrollTop = debugDiv.scrollHeight;
       console.log(message);
-      if (elementos.debug) {
-        const timestamp = new Date().toLocaleTimeString();
-        elementos.debug.innerHTML += `${timestamp}: ${JSON.stringify(message, null, 2)}<br>`;
-        elementos.debug.scrollTop = elementos.debug.scrollHeight;
-      }
     }
 
-    // Función para mostrar status
     function showStatus(message, isError = false) {
-      if (elementos.status) {
-        elementos.status.className = `status ${isError ? 'error' : 'success'}`;
-        elementos.status.textContent = message;
-        elementos.status.style.display = 'block';
+      const statusDiv = document.getElementById("status");
+      statusDiv.className = `status ${isError ? 'error' : 'success'}`;
+      statusDiv.textContent = message;
+      statusDiv.style.display = 'block';
+      setTimeout(() => statusDiv.style.display = 'none', 5000);
+    }
+
+    async function testConnection() {
+      log("🧪 Probando conexión...");
+      try {
+        const response = await fetch(API_URL);
+        log("Response status: " + response.status);
+        log("Response headers: " + JSON.stringify([...response.headers.entries()]));
         
-        setTimeout(() => {
-          elementos.status.style.display = 'none';
-        }, 5000);
+        const text = await response.text();
+        log("Response text (primeros 200 chars): " + text.substring(0, 200));
+        
+        try {
+          const json = JSON.parse(text);
+          log("JSON parseado exitosamente");
+          log(json);
+        } catch(e) {
+          log("Error parseando JSON: " + e.message);
+        }
+      } catch (error) {
+        log("❌ Error de conexión: " + error.message);
       }
     }
 
-    // Función para inicializar referencias DOM
-    function initElementos() {
-      elementos.subproyecto = document.getElementById("subproyecto");
-      elementos.rol = document.getElementById("rol");
-      elementos.num = document.getElementById("num");
-      elementos.unitario = document.getElementById("unitario");
-      elementos.guardar = document.getElementById("guardar");
-      elementos.formulario = document.getElementById("formulario");
-      elementos.debug = document.getElementById("debug");
-      elementos.status = document.getElementById("status");
-      
-      debug("Referencias DOM inicializadas");
-    }
-
-    // ====== CARGA INICIAL ======
     async function cargarDatos() {
-      debug("Iniciando carga de datos...");
-      
+      log("Cargando datos...");
       try {
-        // Mostrar estado de carga
-        elementos.subproyecto.innerHTML = '<option value="">Cargando...</option>';
-        elementos.subproyecto.disabled = true;
+        const response = await fetch(API_URL);
+        const data = await response.json();
         
-        debug("Haciendo fetch a: " + API_URL);
-        const resp = await fetch(API_URL, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        debug("Respuesta recibida, status: " + resp.status);
-        
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-        }
-        
-        const data = await resp.json();
-        debug("Datos parseados:");
-        debug(data);
+        log("Datos recibidos:");
+        log(data);
 
         if (data.status === "ok") {
-          // Guardar datos globalmente
-          subproyectos = Array.isArray(data.subproyectos) ? data.subproyectos : [];
-          registros = Array.isArray(data.registros) ? data.registros : [];
-          datosCompletos = data;
+          subproyectos = data.subproyectos || [];
+          registros = data.registros || [];
           
-          debug(`Subproyectos encontrados: ${subproyectos.length}`);
-          debug(`Registros encontrados: ${registros.length}`);
-
-          // Verificar que hay datos
-          if (subproyectos.length === 0) {
-            throw new Error("No se encontraron subproyectos en los datos");
-          }
-
-          // Llenar select subproyectos
-          elementos.subproyecto.innerHTML = '<option value="">Seleccione...</option>';
+          const select = document.getElementById("subproyecto");
+          select.innerHTML = '<option value="">Seleccione...</option>';
           
           subproyectos.forEach(sp => {
             const opt = document.createElement("option");
             opt.value = sp;
             opt.textContent = sp;
-            elementos.subproyecto.appendChild(opt);
+            select.appendChild(opt);
           });
-
-          // Habilitar subproyecto
-          elementos.subproyecto.disabled = false;
-
-          // Reset estado dependientes
-          resetFormulario();
           
-          showStatus(`✅ Datos cargados: ${subproyectos.length} subproyectos, ${registros.length} registros`);
-          debug("Carga completada exitosamente");
+          log(`✅ Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
+          showStatus(`Cargados ${subproyectos.length} subproyectos`);
         } else {
-          throw new Error(data.message || "Respuesta inválida del servidor");
+          throw new Error(data.message || "Error del servidor");
         }
-      } catch (err) {
-        debug("Error al cargar datos:");
-        debug(err.message);
-        
-        // Mostrar error en interfaz
-        elementos.subproyecto.innerHTML = '<option value="">Error al cargar</option>';
-        elementos.subproyecto.disabled = true;
-        
-        showStatus("❌ Error al cargar datos: " + err.message, true);
+      } catch (error) {
+        log("❌ Error cargando datos: " + error.message);
+        showStatus("Error: " + error.message, true);
+        document.getElementById("subproyecto").innerHTML = '<option value="">Error al cargar</option>';
       }
     }
 
-    function resetFormulario() {
-      // Reset rol
-      elementos.rol.innerHTML = '<option value="">Seleccione un subproyecto primero</option>';
-      elementos.rol.disabled = true;
-      elementos.rol.value = "";
-
-      // Reset campos
-      elementos.num.value = "";
-      elementos.unitario.value = "";
-      elementos.num.disabled = true;
-      elementos.unitario.disabled = true;
-
-      // Reset botón y datos
-      elementos.guardar.disabled = true;
-      delete elementos.formulario.dataset.rowIndex;
-      
-      debug("Formulario reseteado");
-    }
-
-    // ====== CUANDO CAMBIA SUBPROYECTO ======
     function onSubproyectoChange() {
-      const seleccionado = elementos.subproyecto.value;
-      debug(`Subproyecto seleccionado: "${seleccionado}"`);
+      const subproyecto = document.getElementById("subproyecto").value;
+      const rolSelect = document.getElementById("rol");
       
-      if (!seleccionado) {
-        resetFormulario();
+      log(`Subproyecto seleccionado: ${subproyecto}`);
+      
+      if (!subproyecto) {
+        rolSelect.innerHTML = '<option value="">Seleccione subproyecto primero</option>';
+        rolSelect.disabled = true;
         return;
       }
 
-      // Filtrar registros por subproyecto
-      const registrosDelSubproyecto = registros.filter(r => 
-        r.subproyecto && r.subproyecto.trim() === seleccionado.trim()
-      );
+      const registrosDelSub = registros.filter(r => r.subproyecto === subproyecto);
+      const roles = [...new Set(registrosDelSub.map(r => r.rol).filter(r => r && r.trim()))];
       
-      debug(`Registros encontrados para "${seleccionado}":`);
-      debug(registrosDelSubproyecto);
-
-      // Obtener roles únicos (solo los que no están vacíos)
-      const rolesConDatos = registrosDelSubproyecto
-        .filter(r => r.rol && r.rol.trim() !== "")
-        .map(r => r.rol.trim());
+      log(`Encontrados ${roles.length} roles para este subproyecto`);
       
-      const rolesUnicos = [...new Set(rolesConDatos)];
-
-      debug(`Roles únicos con datos: ${rolesUnicos.length}`);
-      debug(rolesUnicos);
-
-      // Limpiar y llenar select de roles
-      elementos.rol.innerHTML = '<option value="">Seleccione un rol...</option>';
-
-      if (rolesUnicos.length > 0) {
-        rolesUnicos.forEach(rol => {
-          const opt = document.createElement("option");
-          opt.value = rol;
-          opt.textContent = rol;
-          elementos.rol.appendChild(opt);
-        });
-      }
-
-      // Agregar opción para crear nuevo rol
-      const optNuevo = document.createElement("option");
-      optNuevo.value = "__NUEVO__";
-      optNuevo.textContent = "➕ Crear nuevo rol...";
-      elementos.rol.appendChild(optNuevo);
-
-      // Habilitar rol
-      elementos.rol.disabled = false;
-
-      // Reset campos dependientes
-      elementos.num.value = "";
-      elementos.unitario.value = "";
-      elementos.num.disabled = true;
-      elementos.unitario.disabled = true;
-      elementos.guardar.disabled = true;
-      delete elementos.formulario.dataset.rowIndex;
+      rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
+      roles.forEach(rol => {
+        const opt = document.createElement("option");
+        opt.value = rol;
+        opt.textContent = rol;
+        rolSelect.appendChild(opt);
+      });
+      
+      rolSelect.disabled = false;
     }
 
-    // ====== CUANDO CAMBIA ROL ======
     function onRolChange() {
-      const subproyectoSel = elementos.subproyecto.value;
-      const rolSel = elementos.rol.value;
+      const subproyecto = document.getElementById("subproyecto").value;
+      const rol = document.getElementById("rol").value;
       
-      debug(`Rol seleccionado: "${rolSel}" para subproyecto: "${subproyectoSel}"`);
-
-      if (!subproyectoSel || !rolSel) {
-        elementos.num.disabled = true;
-        elementos.unitario.disabled = true;
-        elementos.guardar.disabled = true;
-        return;
-      }
-
-      if (rolSel === "__NUEVO__") {
-        // Crear nuevo rol
-        const nuevoRol = prompt("Ingrese el nombre del nuevo rol:");
-        if (nuevoRol && nuevoRol.trim() !== "") {
-          debug(`Creando nuevo rol: "${nuevoRol}"`);
-          elementos.num.value = "";
-          elementos.unitario.value = "";
-          elementos.num.disabled = false;
-          elementos.unitario.disabled = false;
-          elementos.guardar.disabled = false;
-          delete elementos.formulario.dataset.rowIndex;
-          
-          // Cambiar el valor del select al nuevo rol
-          elementos.rol.innerHTML = elementos.rol.innerHTML.replace('__NUEVO__', nuevoRol.trim());
-          elementos.rol.value = nuevoRol.trim();
-          
-          debug("Campos habilitados para nuevo rol");
-        } else {
-          elementos.rol.value = "";
-          return;
-        }
+      if (!subproyecto || !rol) return;
+      
+      const registro = registros.find(r => r.subproyecto === subproyecto && r.rol === rol);
+      
+      if (registro) {
+        document.getElementById("num").value = registro.num || "";
+        document.getElementById("unitario").value = registro.unitario || "";
+        document.getElementById("formulario").dataset.rowIndex = registro.row;
+        log(`Cargando datos de fila ${registro.row}`);
       } else {
-        // Buscar registro existente
-        const registro = registros.find(r => 
-          r.subproyecto && r.subproyecto.trim() === subproyectoSel.trim() && 
-          r.rol && r.rol.trim() === rolSel.trim()
-        );
-        
-        debug("Registro encontrado:");
-        debug(registro);
-
-        if (registro) {
-          // Cargar datos existentes
-          elementos.num.value = registro.num || "";
-          elementos.unitario.value = registro.unitario || "";
-          elementos.formulario.dataset.rowIndex = registro.row;
-          debug(`Datos cargados de fila: ${registro.row}`);
-        } else {
-          // Nuevo registro
-          elementos.num.value = "";
-          elementos.unitario.value = "";
-          delete elementos.formulario.dataset.rowIndex;
-          debug("Nuevo registro");
-        }
-
-        // Habilitar campos
-        elementos.num.disabled = false;
-        elementos.unitario.disabled = false;
-        elementos.guardar.disabled = false;
+        document.getElementById("num").value = "";
+        document.getElementById("unitario").value = "";
+        delete document.getElementById("formulario").dataset.rowIndex;
+        log("Nuevo registro");
       }
+      
+      document.getElementById("num").disabled = false;
+      document.getElementById("unitario").disabled = false;
+      document.getElementById("guardar").disabled = false;
     }
 
-    // ====== GUARDAR (POST) ======
-    async function onFormSubmit(e) {
-      e.preventDefault();
-      
-      const btn = elementos.guardar;
+    async function guardarDatos() {
+      const btn = document.getElementById("guardar");
       btn.disabled = true;
       btn.textContent = "Guardando...";
-
-      const subproyecto = elementos.subproyecto.value;
-      const rol = elementos.rol.value;
-      const num = elementos.num.value;
-      const unitario = elementos.unitario.value;
-      const rowIndex = elementos.formulario.dataset.rowIndex ? parseInt(elementos.formulario.dataset.rowIndex, 10) : null;
-
-      debug("Datos a enviar:");
-      debug({ subproyecto, rol, num, unitario, rowIndex });
-
-      // Validaciones
-      if (!subproyecto) { 
-        showStatus("❌ Seleccione un subproyecto", true);
-        btn.disabled = false; 
-        btn.textContent = "Guardar";
-        return; 
-      }
-      if (!rol) { 
-        showStatus("❌ Seleccione un rol", true);
-        btn.disabled = false; 
-        btn.textContent = "Guardar";
-        return; 
-      }
-
+      
       const payload = {
-        subproyecto: subproyecto.trim(),
-        rol: rol.trim(),
-        num: num.trim(),
-        unitario: unitario.trim(),
-        row: rowIndex
+        subproyecto: document.getElementById("subproyecto").value,
+        rol: document.getElementById("rol").value,
+        num: document.getElementById("num").value,
+        unitario: document.getElementById("unitario").value,
+        row: document.getElementById("formulario").dataset.rowIndex ? 
+             parseInt(document.getElementById("formulario").dataset.rowIndex) : null
       };
-
-      debug("Payload final:");
-      debug(payload);
-
+      
+      log("Guardando:");
+      log(payload);
+      
       try {
-        const resp = await fetch(API_URL, {
+        const response = await fetch(API_URL, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         
-        debug("Respuesta POST status: " + resp.status);
+        const data = await response.json();
+        log("Respuesta guardado:");
+        log(data);
         
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-        }
-        
-        const data = await resp.json();
-        debug("Respuesta POST data:");
-        debug(data);
-
         if (data.status === "ok") {
-          showStatus("✅ " + (data.message || "Guardado correctamente"));
-          
-          // Recargar datos para mantener sincronía
-          debug("Recargando datos después de guardar...");
+          showStatus("✅ Guardado correctamente");
           await cargarDatos();
-
-          // Restaurar selecciones
-          setTimeout(() => {
-            if (subproyecto) {
-              elementos.subproyecto.value = subproyecto;
-              onSubproyectoChange();
-              
-              setTimeout(() => {
-                if (rol) {
-                  elementos.rol.value = rol;
-                  onRolChange();
-                }
-              }, 200);
-            }
-          }, 100);
-          
         } else {
-          throw new Error(data.message || "Respuesta de error del servidor");
+          throw new Error(data.message);
         }
-      } catch (err) {
-        debug("Error al guardar:");
-        debug(err.message);
-        showStatus("❌ Error al guardar: " + err.message, true);
+      } catch (error) {
+        log("❌ Error guardando: " + error.message);
+        showStatus("Error: " + error.message, true);
       } finally {
         btn.disabled = false;
         btn.textContent = "Guardar";
       }
     }
 
-    // ====== INICIALIZACIÓN ======
-    document.addEventListener('DOMContentLoaded', function() {
-      debug("DOM cargado, iniciando aplicación...");
-      
-      // Inicializar referencias
-      initElementos();
-      
-      // Agregar event listeners
-      elementos.subproyecto.addEventListener("change", onSubproyectoChange);
-      elementos.rol.addEventListener("change", onRolChange);
-      elementos.formulario.addEventListener("submit", onFormSubmit);
-      
-      debug("Event listeners configurados");
-      
-      // Cargar datos iniciales
-      cargarDatos();
-    });
+    // Inicializar
+    window.addEventListener('load', cargarDatos);
   </script>
 </body>
 </html>
