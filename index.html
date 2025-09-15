@@ -55,20 +55,20 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec";
-    let registros = [];
+    let registros = {};
 
-    // Cargar datos iniciales
+    // 👉 Cargar datos iniciales
     async function cargarDatos() {
       try {
         const resp = await fetch(API_URL);
         const data = await resp.json();
-    
+
         console.log("✅ Respuesta del backend:", data);
-    
+
         if (data.status === "ok" && data.data) {
-          // Guardamos todo el objeto de subproyectos con sus roles
+          // Guardamos el objeto tal como viene del backend
           registros = data.data;
-    
+
           // llenar subproyectos en el select
           const select = document.getElementById("subproyecto");
           Object.keys(registros).forEach(sp => {
@@ -90,10 +90,10 @@
     // 👉 Cuando selecciona un subproyecto
     document.getElementById("subproyecto").addEventListener("change", function () {
       const seleccionado = this.value;
-    
+
       const rolSelect = document.getElementById("rol");
       rolSelect.innerHTML = '<option value="">Seleccione...</option>';
-    
+
       if (registros[seleccionado]) {
         registros[seleccionado].forEach(r => {
           const opt = document.createElement("option");
@@ -102,28 +102,27 @@
           rolSelect.appendChild(opt);
         });
       }
-    
+
       // Limpiar campos dependientes
       document.getElementById("num").value = "";
       document.getElementById("unitario").value = "";
     });
-
     
     // 👉 Cuando selecciona un rol
     document.getElementById("rol").addEventListener("change", function () {
       const subproyectoSel = document.getElementById("subproyecto").value;
       const rolSel = this.value;
-    
+
       if (registros[subproyectoSel]) {
         const registro = registros[subproyectoSel].find(r => r.rol === rolSel);
-    
+
         if (registro) {
           document.getElementById("num").value = registro.num;
           document.getElementById("unitario").value = registro.unitario;
           return;
         }
       }
-    
+
       // Si no encuentra, limpiar
       document.getElementById("num").value = "";
       document.getElementById("unitario").value = "";
@@ -160,10 +159,8 @@
       }
     });
 
-
-    // Ejecutar carga inicial
+    // 👉 Ejecutar carga inicial
     cargarDatos();
   </script>
 </body>
 </html>
-
