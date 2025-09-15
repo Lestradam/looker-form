@@ -33,10 +33,10 @@
   </form>
 
   <script>
-    // 🔹 Pega aquí la URL publicada de tu WebApp de Apps Script (Deploy → Web App → Anyone)
+    // 🔹 Pega aquí la URL publicada de tu WebApp de Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec"; 
 
-    let registros = []; // aquí guardamos todos los registros
+    let registros = []; // guardamos todos los registros
 
     // 🔹 Cargar todos los registros al inicio
     async function cargarDatos() {
@@ -44,12 +44,15 @@
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        if (data.status === "ok") {
+        console.log("Respuesta del backend:", data); // 👈 aquí vemos qué devuelve Apps Script
+
+        if (data.status === "ok" && Array.isArray(data.registros)) {
           registros = data.registros;
 
           // llenar subproyectos únicos
           const subSel = document.getElementById("subproyectoSelect");
           const subsUnicos = [...new Set(registros.map(r => r.subproyecto))];
+
           subSel.innerHTML = "<option value=''>Seleccione...</option>";
           subsUnicos.forEach(sp => {
             const option = document.createElement("option");
@@ -58,7 +61,8 @@
             subSel.appendChild(option);
           });
         } else {
-          alert("❌ Error en datos iniciales: " + data.message);
+          alert("❌ Error en datos iniciales: no llegaron registros");
+          console.error("Respuesta inesperada:", data);
         }
       } catch (err) {
         console.error("Error al cargar datos iniciales", err);
