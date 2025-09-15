@@ -45,10 +45,14 @@
       <input type="text" id="columnaL" disabled>
 
       <label>Tipo (Columna M):</label>
-      <input type="text" id="tipo" disabled>
+      <select id="tipo" disabled>
+        <option value="">Seleccione subproyecto primero</option>
+      </select>
 
       <label>Tipo de Personal (Columna N):</label>
-      <input type="text" id="tipoPersonal" disabled>
+      <select id="tipoPersonal" disabled>
+        <option value="">Seleccione subproyecto primero</option>
+      </select>
 
       <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
     </form>
@@ -72,6 +76,8 @@
     
     let registros = [];
     let subproyectos = [];
+    let tiposUnicos = [];
+    let tiposPersonalUnicos = [];
     let lastResponse = null; // Para guardar la última respuesta completa
 
     function log(message) {
@@ -99,7 +105,9 @@
           • Total de columnas: ${lastResponse.debug.totalColumnas}<br>
           • Subproyectos únicos: ${lastResponse.debug.subproyectosUnicos}<br>
           • Total registros: ${lastResponse.debug.totalRegistros}<br>
-          • Registros con rol: ${lastResponse.debug.registrosConRol}<br><br>
+          • Registros con rol: ${lastResponse.debug.registrosConRol}<br>
+          • Tipos únicos: ${tiposUnicos.length}<br>
+          • Tipos de personal únicos: ${tiposPersonalUnicos.length}<br><br>
           
           <strong>📋 Encabezados encontrados:</strong><br>
           ${lastResponse.debug.encabezados.map((h, i) => `Col ${i+1}: "${h}"`).join('<br>')}<br><br>
@@ -118,6 +126,10 @@
           • Columna L: "${lastResponse.debug.columnaLHeader}"<br>
           • Columna M: "${lastResponse.debug.columnaMHeader}"<br>
           • Columna N: "${lastResponse.debug.columnaNHeader}"<br><br>
+          
+          <strong>🎨 Valores únicos encontrados:</strong><br>
+          • Tipos (M): ${tiposUnicos.length > 0 ? tiposUnicos.join(', ') : 'Ninguno'}<br>
+          • Tipos Personal (N): ${tiposPersonalUnicos.length > 0 ? tiposPersonalUnicos.join(', ') : 'Ninguno'}<br><br>
           
           <strong>📝 Primeros 3 registros:</strong><br>
           ${lastResponse.debug.primeros3Registros ? 
@@ -169,6 +181,42 @@
       }
     }
 
+    function resetFormFields() {
+      // Restablecer todos los campos excepto subproyecto
+      document.getElementById("rol").innerHTML = '<option value="">Seleccione subproyecto primero</option>';
+      document.getElementById("rol").disabled = true;
+      document.getElementById("num").value = "";
+      document.getElementById("num").disabled = true;
+      document.getElementById("unitario").value = "";
+      document.getElementById("unitario").disabled = true;
+      document.getElementById("columnaL").value = "";
+      document.getElementById("columnaL").disabled = true;
+      document.getElementById("tipo").innerHTML = '<option value="">Seleccione rol primero</option>';
+      document.getElementById("tipo").disabled = true;
+      document.getElementById("tipoPersonal").innerHTML = '<option value="">Seleccione rol primero</option>';
+      document.getElementById("tipoPersonal").disabled = true;
+      document.getElementById("guardar").disabled = true;
+      
+      // Limpiar el índice de fila
+      delete document.getElementById("formulario").dataset.rowIndex;
+      
+      log("🔄 Campos del formulario restablecidos");
+    }
+
+    function populateDropdown(selectId, values, defaultText = "Seleccione...") {
+      const select = document.getElementById(selectId);
+      select.innerHTML = `<option value="">${defaultText}</option>`;
+      
+      values.forEach(value => {
+        if (value && value.trim() !== "") {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value;
+          select.appendChild(opt);
+        }
+      });
+    }
+
     async function cargarDatos() {
       log("Cargando datos...");
       try {
@@ -184,6 +232,13 @@
         if (data.status === "ok") {
           subproyectos = data.subproyectos || [];
           registros = data.registros || [];
+          
+          // Extraer valores únicos para los dropdowns
+          tiposUnicos = [...new Set(registros.map(r => r.tipo).filter(t => t && t.trim() !== ""))].sort();
+          tiposPersonalUnicos = [...new Set(registros.map(r => r.tipoPersonal).filter(tp => tp && tp.trim() !== ""))].sort();
+          
+          log(`🎨 Encontrados ${tiposUnicos.length} tipos únicos: ${tiposUnicos.join(', ')}`);
+          log(`👥 Encontrados ${tiposPersonalUnicos.length} tipos de personal únicos: ${tiposPersonalUnicos.join(', ')}`);
           
           const select = document.getElementById("subproyecto");
           select.innerHTML = '<option value="">Seleccione...</option>';
@@ -218,13 +273,13 @@
 
     function onSubproyectoChange() {
       const subproyecto = document.getElementById("subproyecto").value;
-      const rolSelect = document.getElementById("rol");
       
       log(`Subproyecto seleccionado: ${subproyecto}`);
       
+      // Restablecer todos los otros campos
+      resetFormFields();
+      
       if (!subproyecto) {
-        rolSelect.innerHTML = '<option value="">Seleccione subproyecto primero</option>';
-        rolSelect.disabled = true;
         return;
       }
 
@@ -236,6 +291,7 @@
       log("Registros del subproyecto (incluyendo todas las columnas):");
       log(registrosDelSub);
       
+      const rolSelect = document.getElementById("rol");
       rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
       roles.forEach(rol => {
         const opt = document.createElement("option");
@@ -254,6 +310,10 @@
       if (!subproyecto || !rol) return;
       
       const registro = registros.find(r => r.subproyecto === subproyecto && r.rol === rol);
+      
+      // Habilitar y llenar los dropdowns de tipo
+      populateDropdown("tipo", tiposUnicos, "Seleccione tipo...");
+      populateDropdown("tipoPersonal", tiposPersonalUnicos, "Seleccione tipo de personal...");
       
       if (registro) {
         document.getElementById("num").value = registro.num || "";
@@ -274,6 +334,7 @@
         log("Nuevo registro");
       }
       
+      // Habilitar todos los campos
       document.getElementById("num").disabled = false;
       document.getElementById("unitario").disabled = false;
       document.getElementById("columnaL").disabled = false;
