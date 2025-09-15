@@ -44,6 +44,12 @@
       <label>Columna L:</label>
       <input type="text" id="columnaL" disabled>
 
+      <label>Tipo (Columna M):</label>
+      <input type="text" id="tipo" disabled>
+
+      <label>Tipo de Personal (Columna N):</label>
+      <input type="text" id="tipoPersonal" disabled>
+
       <button onclick="guardarDatos()" id="guardar" disabled>Guardar</button>
     </form>
     
@@ -62,7 +68,7 @@
 
   <script>
     // === CONFIG - CAMBIA ESTA URL POR LA TUYA ===
-    const API_URL = "https://script.google.com/macros/s/AKfycbxvekTuljokSa2gbLL0o7mkWJoWF9Gui1ymbG7T7hdUgeUdpwIVg95oHac8g5bkDOWV/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzD13x40paMguboGSMdb50QijK4V-1Lebo60queIMn8AAw_GSfY2if2ZxE3-6Fpvppw/exec";
     
     let registros = [];
     let subproyectos = [];
@@ -103,16 +109,20 @@
           • Rol: Columna ${lastResponse.debug.columnasUsadas.rol}<br>
           • Número: Columna ${lastResponse.debug.columnasUsadas.num}<br>
           • Unitario: Columna ${lastResponse.debug.columnasUsadas.unitario}<br>
-          • Columna L: Columna ${lastResponse.debug.columnasUsadas.columnaL}<br><br>
+          • Columna L: Columna ${lastResponse.debug.columnasUsadas.columnaL}<br>
+          • Tipo: Columna ${lastResponse.debug.columnasUsadas.tipo}<br>
+          • Tipo Personal: Columna ${lastResponse.debug.columnasUsadas.tipoPersonal}<br><br>
           
           <strong>🏷️ Headers de columnas importantes:</strong><br>
           • Columna K: "${lastResponse.debug.columnaKHeader}"<br>
-          • Columna L: "${lastResponse.debug.columnaLHeader}"<br><br>
+          • Columna L: "${lastResponse.debug.columnaLHeader}"<br>
+          • Columna M: "${lastResponse.debug.columnaMHeader}"<br>
+          • Columna N: "${lastResponse.debug.columnaNHeader}"<br><br>
           
           <strong>📝 Primeros 3 registros:</strong><br>
           ${lastResponse.debug.primeros3Registros ? 
             lastResponse.debug.primeros3Registros.map(r => 
-              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | K:"${r.unitario}" | L:"${r.columnaL}"`
+              `• "${r.subproyecto}" | "${r.rol}" | "${r.num}" | K:"${r.unitario}" | L:"${r.columnaL}" | M:"${r.tipo}" | N:"${r.tipoPersonal}"`
             ).join('<br>') : 'No hay registros'}
         `;
       } else {
@@ -147,6 +157,8 @@
             log("Primeros 3 registros: " + JSON.stringify(json.debug.primeros3Registros));
             log("Header Columna K: " + json.debug.columnaKHeader);
             log("Header Columna L: " + json.debug.columnaLHeader);
+            log("Header Columna M: " + json.debug.columnaMHeader);
+            log("Header Columna N: " + json.debug.columnaNHeader);
           }
           
         } catch(e) {
@@ -184,7 +196,7 @@
           });
           
           log(`✅ Cargados ${subproyectos.length} subproyectos y ${registros.length} registros`);
-          log("Ejemplo de registro con columnaL:");
+          log("Ejemplo de registro con todas las columnas:");
           if (registros.length > 0) {
             log(registros[0]);
           }
@@ -221,7 +233,7 @@
       
       log(`Encontrados ${roles.length} roles para este subproyecto:`);
       log(roles);
-      log("Registros del subproyecto (incluyendo columnaL):");
+      log("Registros del subproyecto (incluyendo todas las columnas):");
       log(registrosDelSub);
       
       rolSelect.innerHTML = '<option value="">Seleccione rol...</option>';
@@ -247,13 +259,17 @@
         document.getElementById("num").value = registro.num || "";
         document.getElementById("unitario").value = registro.unitario || "";
         document.getElementById("columnaL").value = registro.columnaL || "";
+        document.getElementById("tipo").value = registro.tipo || "";
+        document.getElementById("tipoPersonal").value = registro.tipoPersonal || "";
         document.getElementById("formulario").dataset.rowIndex = registro.row;
-        log(`Cargando datos de fila ${registro.row} (incluyendo columnaL):`);
+        log(`Cargando datos de fila ${registro.row} (incluyendo todas las columnas):`);
         log(registro);
       } else {
         document.getElementById("num").value = "";
         document.getElementById("unitario").value = "";
         document.getElementById("columnaL").value = "";
+        document.getElementById("tipo").value = "";
+        document.getElementById("tipoPersonal").value = "";
         delete document.getElementById("formulario").dataset.rowIndex;
         log("Nuevo registro");
       }
@@ -261,6 +277,8 @@
       document.getElementById("num").disabled = false;
       document.getElementById("unitario").disabled = false;
       document.getElementById("columnaL").disabled = false;
+      document.getElementById("tipo").disabled = false;
+      document.getElementById("tipoPersonal").disabled = false;
       document.getElementById("guardar").disabled = false;
     }
 
@@ -275,11 +293,13 @@
         num: document.getElementById("num").value,
         unitario: document.getElementById("unitario").value,
         columnaL: document.getElementById("columnaL").value,
+        tipo: document.getElementById("tipo").value,
+        tipoPersonal: document.getElementById("tipoPersonal").value,
         row: document.getElementById("formulario").dataset.rowIndex ? 
              parseInt(document.getElementById("formulario").dataset.rowIndex) : null
       };
       
-      log("Guardando (incluyendo columnaL):");
+      log("Guardando (incluyendo todas las columnas):");
       log(payload);
       
       try {
@@ -294,7 +314,7 @@
         log(data);
         
         if (data.status === "ok") {
-          showStatus("✅ Guardado correctamente (incluyendo columna L)");
+          showStatus("✅ Guardado correctamente (incluyendo columnas L, M y N)");
           await cargarDatos();
         } else {
           throw new Error(data.message);
