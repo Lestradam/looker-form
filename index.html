@@ -1,138 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario</title>
+  <title>Formulario Looker</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    label { display: block; margin-top: 10px; }
-    select, input, button { padding: 5px; margin-top: 5px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select, button {
+      width: 300px;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    button {
+      width: 150px;
+      margin-top: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
-  <h2>Registro</h2>
+  <h2>Formulario Looker</h2>
 
-  <form id="registroForm">
-    <label>Subproyecto:
-      <select id="subproyectoSelect" required></select>
-    </label>
+  <form id="formulario">
+    <label for="subproyecto">Subproyecto:</label>
+    <select id="subproyecto" name="subproyecto" required>
+      <option value="">Seleccione...</option>
+    </select>
 
-    <label>Rol:
-      <select id="rolSelect" required></select>
-    </label>
+    <label for="rol">Rol:</label>
+    <input type="text" id="rol" name="rol" required>
 
-    <label>#:
-      <input type="number" id="numero" required>
-    </label>
+    <label for="num">Número:</label>
+    <input type="number" id="num" name="num" required>
 
-    <label>Unitario:
-      <input type="number" step="0.01" id="unitario" required>
-    </label>
+    <label for="unitario">Valor Unitario:</label>
+    <input type="number" id="unitario" name="unitario" required>
 
     <button type="submit">Guardar</button>
   </form>
 
   <script>
-    // 🔹 Pega aquí la URL publicada de tu WebApp de Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbxABuDOpk2CzYcHbfJjm6w0k4h-HVmNbL5aYDgzeSrb_a9U0ptrdpofTRH6E5VDGfEt/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbyHTyV2z82K8g3Rt7WUnb3YHnMjNoaS2CbpYIRvmNq9cv6eMtdCJ7INkV_M-bNsHX2n/exec";
+    let registros = [];
 
-    let registros = []; // guardamos todos los registros
-
-    // 🔹 Cargar todos los registros al inicio
+    // Cargar datos iniciales
     async function cargarDatos() {
       try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
+        const resp = await fetch(API_URL);
+        const data = await resp.json();
 
-        console.log("Respuesta del backend:", data); // 👈 aquí vemos qué devuelve Apps Script
+        console.log("✅ Respuesta del backend:", data);
 
-        if (data.status === "ok" && Array.isArray(data.registros)) {
+        if (data.status === "ok" && data.subproyectos && data.registros) {
           registros = data.registros;
 
-          // llenar subproyectos únicos
-          const subSel = document.getElementById("subproyectoSelect");
-          const subsUnicos = [...new Set(registros.map(r => r.subproyecto))];
-
-          subSel.innerHTML = "<option value=''>Seleccione...</option>";
-          subsUnicos.forEach(sp => {
-            const option = document.createElement("option");
-            option.value = sp;
-            option.textContent = sp;
-            subSel.appendChild(option);
+          const select = document.getElementById("subproyecto");
+          data.subproyectos.forEach(sp => {
+            const opt = document.createElement("option");
+            opt.value = sp;
+            opt.textContent = sp;
+            select.appendChild(opt);
           });
         } else {
-          alert("❌ Error en datos iniciales: no llegaron registros");
-          console.error("Respuesta inesperada:", data);
+          console.error("❌ Error en datos iniciales:", data);
+          alert("No se pudieron cargar los datos iniciales.");
         }
       } catch (err) {
-        console.error("Error al cargar datos iniciales", err);
-        alert("❌ No se pudieron cargar datos iniciales");
+        console.error("❌ Error al cargar datos iniciales:", err);
+        alert("Error de conexión al cargar datos iniciales.");
       }
     }
 
-    // 🔹 Evento: cuando cambia el subproyecto → cargar roles
-    document.getElementById("subproyectoSelect").addEventListener("change", (e) => {
-      const sub = e.target.value;
-      const rolesFiltrados = registros.filter(r => r.subproyecto === sub);
+    // Cuando selecciona un subproyecto, rellenar los campos
+    document.getElementById("subproyecto").addEventListener("change", function () {
+      const seleccionado = this.value;
+      const registro = registros.find(r => r.subproyecto === seleccionado);
 
-      const rolSel = document.getElementById("rolSelect");
-      rolSel.innerHTML = "<option value=''>Seleccione...</option>";
-      rolesFiltrados.forEach(r => {
-        const option = document.createElement("option");
-        option.value = r.rol;
-        option.textContent = r.rol;
-        rolSel.appendChild(option);
-      });
-
-      // limpiar num y unitario
-      document.getElementById("numero").value = "";
-      document.getElementById("unitario").value = "";
-    });
-
-    // 🔹 Evento: cuando cambia el rol → llenar num y unitario
-    document.getElementById("rolSelect").addEventListener("change", (e) => {
-      const sub = document.getElementById("subproyectoSelect").value;
-      const rol = e.target.value;
-
-      const reg = registros.find(r => r.subproyecto === sub && r.rol === rol);
-      if (reg) {
-        document.getElementById("numero").value = reg.num || "";
-        document.getElementById("unitario").value = reg.unitario || "";
+      if (registro) {
+        document.getElementById("rol").value = registro.rol;
+        document.getElementById("num").value = registro.num;
+        document.getElementById("unitario").value = registro.unitario;
+      } else {
+        console.warn("⚠️ No se encontró registro para:", seleccionado);
+        document.getElementById("rol").value = "";
+        document.getElementById("num").value = "";
+        document.getElementById("unitario").value = "";
       }
     });
 
-    // 🔹 Guardar nuevo registro en la hoja
-    document.getElementById("registroForm").addEventListener("submit", async (e) => {
+    // Guardar datos (POST al backend)
+    document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
+
       const payload = {
-        subproyecto: document.getElementById("subproyectoSelect").value,
-        rol: document.getElementById("rolSelect").value,
-        num: document.getElementById("numero").value,
+        subproyecto: document.getElementById("subproyecto").value,
+        rol: document.getElementById("rol").value,
+        num: document.getElementById("num").value,
         unitario: document.getElementById("unitario").value
       };
 
       try {
-        const res = await fetch(API_URL, {
+        const resp = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        const data = await resp.json();
 
         if (data.status === "ok") {
-          alert("✅ " + data.message);
-          document.getElementById("registroForm").reset();
+          alert("✅ Registro guardado correctamente.");
+          document.getElementById("formulario").reset();
         } else {
           alert("❌ Error al guardar: " + data.message);
         }
       } catch (err) {
-        console.error("Error al guardar", err);
-        alert("❌ No se pudo guardar");
+        console.error("❌ Error al guardar:", err);
+        alert("Error de conexión al guardar.");
       }
     });
 
-    // cargar datos iniciales al abrir la página
-    window.onload = cargarDatos;
+    // Ejecutar carga inicial
+    cargarDatos();
   </script>
 </body>
 </html>
