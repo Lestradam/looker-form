@@ -63,8 +63,8 @@
 
         console.log("✅ Respuesta del backend:", data);
 
-        if (data.status === "ok" && data.subproyectos && data.registros) {
-          registros = data.registros;
+        if (data.status === "ok" && data.subproyectos) {
+          registros = data.registros || []; // 👈 si no viene, queda en []
 
           const select = document.getElementById("subproyecto");
           data.subproyectos.forEach(sp => {
@@ -136,4 +136,3 @@
   </script>
 </body>
 </html>
-
