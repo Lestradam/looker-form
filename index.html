@@ -80,6 +80,7 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fila, unitario })
         });
         const data = await res.json();
@@ -96,3 +97,4 @@
   </script>
 </body>
 </html>
+
