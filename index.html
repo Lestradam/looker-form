@@ -6,7 +6,7 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 10px; }
-    input, button { padding: 5px; margin-top: 5px; }
+    select, input, button { padding: 5px; margin-top: 5px; }
     .result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
   </style>
 </head>
@@ -14,7 +14,7 @@
   <h2>Editar Subproyecto</h2>
 
   <label for="subproyecto">Subproyecto:</label>
-  <input type="text" id="subproyecto" placeholder="Escribe el subproyecto...">
+  <select id="subproyecto"></select>
   <button onclick="buscar()">Buscar</button>
 
   <div id="result" class="result" style="display:none;">
@@ -28,9 +28,24 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxlPCSnR4bX8zUyi-M0BDCMQ8KdGTCLhjmDbAuXMZAlU5J6wX0a4yUhFroeyWIb_8ae/exec"; // pega aquí el link de tu WebApp publicado
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlPCSnR4bX8zUyi-M0BDCMQ8KdGTCLhjmDbAuXMZAlU5J6wX0a4yUhFroeyWIb_8ae/exec"; 
 
-    let fila = null; // guardamos la fila para el update
+    let fila = null; 
+
+    // 🔹 Al cargar la página → poblar desplegable
+    window.onload = async () => {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (data.status === "ok") {
+        const select = document.getElementById("subproyecto");
+        data.subproyectos.forEach(sp => {
+          const option = document.createElement("option");
+          option.value = sp;
+          option.textContent = sp;
+          select.appendChild(option);
+        });
+      }
+    };
 
     async function buscar() {
       const subproyecto = document.getElementById("subproyecto").value;
